@@ -1,5 +1,9 @@
 # simple_json_persistence
 
+[![codecov](https://codecov.io/gh/hpoul/simple_json_persistence/branch/master/graph/badge.svg)](https://codecov.io/gh/hpoul/simple_json_persistence)
+[![Pub](https://img.shields.io/pub/v/simple_json_persistence.svg?style=flat-square)](https://pub.dartlang.org/packages/simple_json_persistence)
+[![Cirrus CI - Base Branch Build Status](https://img.shields.io/cirrus/github/hpoul/simple_json_persistence)](https://cirrus-ci.com/github/hpoul/simple_json_persistence)
+
 Flutter data storage based on simple json files. The main advantage to using
 for example the shared preference plugin is that:
 
@@ -47,4 +51,20 @@ void doSomething() async {
   });
 }
 
+```
+
+## Usage in flutter (StreamBuilder)
+
+See also the [example](https://github.com/hpoul/simple_json_persistence/tree/master/example) application.
+```dart
+Widget build(BuildContext context) {
+  final store = SimpleJsonPersistence.forType(
+      (json) => AppData.fromJson(json),
+      defaultCreator: () => AppData(counter: 0));
+  return StreamBuilder<AppData>(
+    stream: store.onValueChangedAndLoad,
+    initialData: store.cachedValue,
+    builder: (context, snapshot) => Text('Counter: ${snapshot.data?.counter ?? 'Loading'}'),
+  );
+}
 ```
