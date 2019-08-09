@@ -2,6 +2,8 @@ container:
   image: cirrusci/flutter:v1.7.8-hotfix.4
 coverage_task:
   name: "Coverage"
+  environment:
+    CODECOV_TOKEN: ENCRYPTED[135748d068d2cf8d81be783cfa2c198f9c359fdbfa0afff5732ff464d7b43fc6b2ba3ff40318fb39e5284ed7a95722fe]
   test_script:
     - tools/test-coverage.sh
 analyze_task:
