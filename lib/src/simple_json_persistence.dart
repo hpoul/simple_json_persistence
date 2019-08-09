@@ -35,13 +35,10 @@ class SimpleJsonPersistence<T extends HasToJson> {
     @required this.documentsDir,
     @required this.name,
     this.defaultCreator,
-  }) {
-//    _onValueChanged.onListen = () {
-//      _logger.fine('onListen.');
-//      load();
-//    };
-//    _onValueChanged.onListen = load;
-    _logger.fine('storing into: $file');
+  })  : assert(fromJson != null),
+        assert(documentsDir != null),
+        assert(name != null) {
+    _logger.finer('storing into: $file');
   }
 
   factory SimpleJsonPersistence.forType(FromJson<T> fromJson,
@@ -61,19 +58,29 @@ class SimpleJsonPersistence<T extends HasToJson> {
   Future<File> _init() => documentsDir
       .then((documentsDir) => File(p.join(documentsDir.path, '$name.json')));
 
-  final BehaviorSubject<T> _onValueChanged = BehaviorSubject<T>();
+  final PublishSubject<T> _onValueChanged = PublishSubject<T>();
 
-//  Stream<T> get onValueChanged => Observable.fromFuture(load()).concatWith([_onValueChanged.stream]);
-  ValueObservable<T> get onValueChanged => _onValueChanged.stream;
+  /// Stream which will receive a new notification on every [save] call.
+  Stream<T> get onValueChanged => _onValueChanged.stream;
+
+  /// Stream with the current value as first event,
+  /// concatenated with [onValueChanged].
+  Stream<T> get onValueChangedAndLoad => Observable<T>.concat(
+      [Observable.fromFuture(loadOrDefault()), onValueChanged]);
 
   Observable<T> onValueChangedOrDefault(Future<T> defaultValue) =>
-      onValueChanged.hasValue
-          ? _onValueChanged.stream
-          : Observable<T>.concat([
-              Observable.fromFuture(defaultValue),
-              onValueChanged,
-            ]);
-  Future<T> _cachedValue;
+      Observable<T>.concat([
+        Observable.fromFuture(_cachedValueOrLoading ?? defaultValue),
+        onValueChanged,
+      ]);
+  Future<T> _cachedValueLoadingFuture;
+  Future<T> get _cachedValueOrLoading => _cachedValue != null
+      ? Future.value(_cachedValue)
+      : _cachedValueLoadingFuture;
+  T _cachedValue;
+
+  /// Useful for using as `initialValue` in [StreamBuilder].
+  T get cachedValue => _cachedValue;
 
   static final Map<String, SimpleJsonPersistence<dynamic>> _storageSingletons =
       {};
@@ -106,18 +113,20 @@ class SimpleJsonPersistence<T extends HasToJson> {
     );
   }
 
+  Future<T> loadOrDefault() async => await load() ?? _createDefault();
+
   Future<T> load() async {
     final f = await file;
     if (!f.existsSync()) {
       return Future.value(_createDefault());
     }
-    if (_cachedValue != null) {
-      return _cachedValue;
+    if (_cachedValueLoadingFuture != null) {
+      return _cachedValueLoadingFuture;
     }
     _logger.fine('Deserializing $name');
 //    file.readAsString().then((data) => _logger.finest('Loading: $data'));
 
-    return _cachedValue = f
+    return _cachedValueLoadingFuture = f
         .readAsString()
         .then((data) {
           try {
@@ -137,19 +146,20 @@ class SimpleJsonPersistence<T extends HasToJson> {
           }
         })
         .then((json) => fromJson(json))
-        .then((value) => _onValueChanged.value = value)
         .catchError((dynamic error, StackTrace stackTrace) {
-          if (error == _EXCEPTION_FORCE_DEFAULT) {
-            _logger.fine('forcing using of default value for $name');
-          }
+          _logger.fine(
+              'forcing using of default value for $name', error, stackTrace);
+          return _createDefault();
+        }, test: (error) => error == _EXCEPTION_FORCE_DEFAULT)
+        .then((value) => _updateValue(value))
+        .catchError((dynamic error, StackTrace stackTrace) {
           _logger.severe('Error while loading data', error, stackTrace);
-          return null;
-//      return Future<T>.error(error, stackTrace);
+          return Future<T>.error(error, stackTrace);
         });
   }
 
   Future<File> save(T value) {
-    _cachedValue = Future.value(value);
+    _cachedValueLoadingFuture = Future.value(value);
     _onValueChanged.add(value);
     return file.then(
         (file) => file.writeAsString(json.encode(value.toJson()), flush: true));
@@ -170,6 +180,13 @@ class SimpleJsonPersistence<T extends HasToJson> {
   @visibleForTesting
   Future<void> dispose() async {
     _storageSingletons.remove(name);
-    _cachedValue = null;
+    _cachedValueLoadingFuture = null;
+  }
+
+  T _updateValue(T value) {
+    _onValueChanged.add(value);
+    _cachedValueLoadingFuture = null;
+    _cachedValue = value;
+    return value;
   }
 }
