@@ -2,11 +2,16 @@ services:
   - docker
 jobs:
   include:
-    - stage: test
+    - name: analyze
+      stage: test
       install: docker pull cirrusci/flutter:v1.7.8-hotfix.4
       script:
-        - docker run --rm cirrusci/flutter:v1.7.8-hotfix.4 -v $(pwd):/project tools/test-analyze.sh
-    - stage: test
+        - docker run --rm -v $(pwd):/project cirrusci/flutter:v1.7.8-hotfix.4 tools/test-analyze.sh
+    - name: test coverage
+      stage: test
       install: docker pull cirrusci/flutter:v1.7.8-hotfix.4
       script:
-        - docker run --rm cirrusci/flutter:v1.7.8-hotfix.4 -v $(pwd):/project tools/test-coverage.sh
+        - docker run --rm -v $(pwd):/project cirrusci/flutter:v1.7.8-hotfix.4 tools/test-coverage.sh
+env:
+  global:
+    secure: G1IDHIVuum2EJVo6Xov4v0ziE2/sDPt6MG0u0zOJGhEFidaZZilitbc9pG4wSh32RS51HBzBFOXLRo+DtVq9lKBRpwjm2wk6KSojgksCzNwJIVPNAZkOH3v9vP/iV1AMZi0FPLfrcP9/c7b6xWFMof0IrG3uu7lqYBDpNl84I9g8VIFfUOoAHOIfgBFAUp8SoSazE7ToI+tT6lkoMU8qUuRjVVqFhykYntdRmOct8e789DRkiq3tInAXbMk65qbhi1D9qEYwmC+r200Z4LSF7XzSaJ4maXL2aIsRkQbn3An4GbT3Nj1Cp5jiHEdrqac04Z/WsueNDorXnn5m1izsQwfErKSQ5e2E1RgX3u9tyI4R0xyFl7pU2xPdHgLGygjf4u+NdiJ0N/lZh6PbZUwoFSIqRlO6CLEV8GTGOnTATepKUfh6Zzbd2sjhmXLNIDCTBcCdBbnX8I5VaU7BneyOt+v91sF29h3MOjcbrz4P1Odqc7fwTJr7NS9Tv0K66DYdv+vLPj4yQy09EFnnnrHHV80LPR60avB+Sich3t0nj1zuTH1hhY1J6A9+2viIMNXg24w4SDyA3eRSGM32t7O0+MdhZbKwafEGGKkFCs8B++ctWeXNHIfbDXe1LprB/VMofANaPOOifw9sadoS7otA9WQEurAsmEBTByK2VtAOjzY=
