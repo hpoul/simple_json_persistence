@@ -76,6 +76,7 @@ class SimpleJsonPersistence<T extends HasToJson> {
         onValueChanged,
       ]);
   Future<T> _cachedValueLoadingFuture;
+
   Future<T> get _cachedValueOrLoading => _cachedValue != null
       ? Future.value(_cachedValue)
       : _cachedValueLoadingFuture;
