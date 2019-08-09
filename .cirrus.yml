@@ -1,0 +1,9 @@
+container:
+  image: cirrusci/flutter:v1.7.8-hotfix.4
+coverage_task:
+  name: "Coverage"
+  test_script:
+    - tools/test-coverage.sh
+analyze_task:
+  name: "Analyzer"
+  test_script: tools/test-analyze.sh
