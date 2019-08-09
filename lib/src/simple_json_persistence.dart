@@ -10,8 +10,8 @@ import 'package:path_provider/path_provider.dart';
 
 final _logger = Logger('simple_json_persistence');
 
-const SUB_DIR_NAME = 'json';
-const EXCEPTION_FORCE_DEFAULT = 'forceDefault';
+const _SUB_DIR_NAME = 'json';
+const _EXCEPTION_FORCE_DEFAULT = 'forceDefault';
 
 abstract class HasToJson {
   Map<String, dynamic> toJson();
@@ -19,6 +19,14 @@ abstract class HasToJson {
 
 typedef FromJson<T> = T Function(Map<String, dynamic> json);
 
+/// Simple storage for any objects which can be serialized to json.
+///
+/// Right now for each type (name) it should only be used by one application in one isolate at the same time,
+/// otherwise they would overwrite their changes.
+///
+/// Each type has one instance of this persistence class ie. calling [SimpleJsonPersistence.forType] multiple times
+/// for the same type will return the same instance.
+/// Once [load] has been called it will be cached/kept in memory forever.
 class SimpleJsonPersistence<T extends HasToJson> {
   SimpleJsonPersistence._({
     @required this.fromJson,
@@ -32,6 +40,10 @@ class SimpleJsonPersistence<T extends HasToJson> {
 //    };
 //    _onValueChanged.onListen = load;
     _logger.fine('storing into: $file');
+  }
+
+  factory SimpleJsonPersistence.forType(FromJson<T> fromJson, {T Function() defaultCreator}) {
+    return getForTypeSync(fromJson, defaultCreator: defaultCreator);
   }
 
   /// Name of the store (used as file name for the .json file)
@@ -55,7 +67,7 @@ class SimpleJsonPersistence<T extends HasToJson> {
         ]);
   Future<T> _cachedValue;
 
-  static Map<String, SimpleJsonPersistence<dynamic>> storageSingletons = {};
+  static final Map<String, SimpleJsonPersistence<dynamic>> _storageSingletons = {};
 
   static Future<SimpleJsonPersistence<T>> getForType<T extends HasToJson>(FromJson<T> fromJson,
           {T Function() defaultCreator}) =>
@@ -64,7 +76,7 @@ class SimpleJsonPersistence<T extends HasToJson> {
   static SimpleJsonPersistence<T> getForTypeSync<T extends HasToJson>(FromJson<T> fromJson,
       {T Function() defaultCreator}) {
     final String name = T.toString();
-    final storage = storageSingletons[name];
+    final storage = _storageSingletons[name];
     if (storage != null) {
       return storage as SimpleJsonPersistence<T>; //Future.value(storage as SimpleJsonPersistence<T>);
     }
@@ -73,10 +85,10 @@ class SimpleJsonPersistence<T extends HasToJson> {
 //      return storage;
 //    };
 
-    return storageSingletons[name] = SimpleJsonPersistence<T>._(
+    return _storageSingletons[name] = SimpleJsonPersistence<T>._(
       fromJson: fromJson,
       documentsDir: getApplicationDocumentsDirectory()
-          .then((dir) => Directory(p.join(dir.path, SUB_DIR_NAME)).create(recursive: true)),
+          .then((dir) => Directory(p.join(dir.path, _SUB_DIR_NAME)).create(recursive: true)),
       name: T.toString(),
       defaultCreator: defaultCreator,
     );
@@ -102,7 +114,7 @@ class SimpleJsonPersistence<T extends HasToJson> {
             if (data == null || data.isEmpty) {
               _logger.shout(
                   '$name: json file is compltely empty. for some reason corrupted? (${data?.length})', e, stackTrace);
-              throw EXCEPTION_FORCE_DEFAULT;
+              throw _EXCEPTION_FORCE_DEFAULT;
             }
             _logger.severe('$name: Persisted json file was corrupted.', e, stackTrace);
             _logger.severe('Contents of json file: $data');
@@ -112,7 +124,7 @@ class SimpleJsonPersistence<T extends HasToJson> {
         .then((json) => fromJson(json))
         .then((value) => _onValueChanged.value = value)
         .catchError((dynamic error, StackTrace stackTrace) {
-          if (error == EXCEPTION_FORCE_DEFAULT) {
+          if (error == _EXCEPTION_FORCE_DEFAULT) {
             _logger.fine('forcing using of default value for $name');
           }
           _logger.severe('Error while loading data', error, stackTrace);
@@ -135,5 +147,13 @@ class SimpleJsonPersistence<T extends HasToJson> {
       await f.delete();
     }
     _onValueChanged.add(_createDefault());
+  }
+
+  /// Removes this store from memory. Probably not really useful in a real world app and should not be used outside
+  /// of testing.
+  @visibleForTesting
+  Future<void> dispose() async {
+    _storageSingletons.remove(name);
+    _cachedValue = null;
   }
 }
