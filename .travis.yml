@@ -1,0 +1,12 @@
+services:
+  - docker
+jobs:
+  include:
+    - stage: test
+      install: docker pull cirrusci/flutter:v1.7.8-hotfix.4
+      script:
+        - docker run --rm cirrusci/flutter:v1.7.8-hotfix.4 -v $(pwd):/project tools/test-analyze.sh
+    - stage: test
+      install: docker pull cirrusci/flutter:v1.7.8-hotfix.4
+      script:
+        - docker run --rm cirrusci/flutter:v1.7.8-hotfix.4 -v $(pwd):/project tools/test-coverage.sh
