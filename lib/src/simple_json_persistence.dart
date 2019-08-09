@@ -21,11 +21,13 @@ typedef FromJson<T> = T Function(Map<String, dynamic> json);
 
 /// Simple storage for any objects which can be serialized to json.
 ///
-/// Right now for each type (name) it should only be used by one application in one isolate at the same time,
-/// otherwise they would overwrite their changes.
+/// Right now for each type (name) it should only be used by one application
+/// in one isolate at the same time, otherwise they would overwrite
+/// their changes.
 ///
-/// Each type has one instance of this persistence class ie. calling [SimpleJsonPersistence.forType] multiple times
-/// for the same type will return the same instance.
+/// Each type has one instance of this persistence class
+/// ie. calling [SimpleJsonPersistence.forType] multiple times for
+/// the same type will return the same instance.
 /// Once [load] has been called it will be cached/kept in memory forever.
 class SimpleJsonPersistence<T extends HasToJson> {
   SimpleJsonPersistence._({
@@ -42,7 +44,8 @@ class SimpleJsonPersistence<T extends HasToJson> {
     _logger.fine('storing into: $file');
   }
 
-  factory SimpleJsonPersistence.forType(FromJson<T> fromJson, {T Function() defaultCreator}) {
+  factory SimpleJsonPersistence.forType(FromJson<T> fromJson,
+      {T Function() defaultCreator}) {
     return getForTypeSync(fromJson, defaultCreator: defaultCreator);
   }
 
@@ -52,33 +55,42 @@ class SimpleJsonPersistence<T extends HasToJson> {
   final T Function() defaultCreator;
   final Future<Directory> documentsDir;
   Future<File> _file;
+
   Future<File> get file => _file ??= _init();
 
-  Future<File> _init() => documentsDir.then((documentsDir) => File(p.join(documentsDir.path, '$name.json')));
+  Future<File> _init() => documentsDir
+      .then((documentsDir) => File(p.join(documentsDir.path, '$name.json')));
 
   final BehaviorSubject<T> _onValueChanged = BehaviorSubject<T>();
+
 //  Stream<T> get onValueChanged => Observable.fromFuture(load()).concatWith([_onValueChanged.stream]);
   ValueObservable<T> get onValueChanged => _onValueChanged.stream;
-  Observable<T> onValueChangedOrDefault(Future<T> defaultValue) => onValueChanged.hasValue
-      ? _onValueChanged.stream
-      : Observable<T>.concat([
-          Observable.fromFuture(defaultValue),
-          onValueChanged,
-        ]);
+
+  Observable<T> onValueChangedOrDefault(Future<T> defaultValue) =>
+      onValueChanged.hasValue
+          ? _onValueChanged.stream
+          : Observable<T>.concat([
+              Observable.fromFuture(defaultValue),
+              onValueChanged,
+            ]);
   Future<T> _cachedValue;
 
-  static final Map<String, SimpleJsonPersistence<dynamic>> _storageSingletons = {};
+  static final Map<String, SimpleJsonPersistence<dynamic>> _storageSingletons =
+      {};
 
-  static Future<SimpleJsonPersistence<T>> getForType<T extends HasToJson>(FromJson<T> fromJson,
+  static Future<SimpleJsonPersistence<T>> getForType<T extends HasToJson>(
+          FromJson<T> fromJson,
           {T Function() defaultCreator}) =>
       Future.value(getForTypeSync(fromJson, defaultCreator: defaultCreator));
 
-  static SimpleJsonPersistence<T> getForTypeSync<T extends HasToJson>(FromJson<T> fromJson,
+  static SimpleJsonPersistence<T> getForTypeSync<T extends HasToJson>(
+      FromJson<T> fromJson,
       {T Function() defaultCreator}) {
     final String name = T.toString();
     final storage = _storageSingletons[name];
     if (storage != null) {
-      return storage as SimpleJsonPersistence<T>; //Future.value(storage as SimpleJsonPersistence<T>);
+      return storage as SimpleJsonPersistence<
+          T>; //Future.value(storage as SimpleJsonPersistence<T>);
     }
 //    final storeSingleton = (SimpleJsonPersistence<T> storage) {
 //      storageSingletons[name] = storage;
@@ -87,8 +99,8 @@ class SimpleJsonPersistence<T extends HasToJson> {
 
     return _storageSingletons[name] = SimpleJsonPersistence<T>._(
       fromJson: fromJson,
-      documentsDir: getApplicationDocumentsDirectory()
-          .then((dir) => Directory(p.join(dir.path, _SUB_DIR_NAME)).create(recursive: true)),
+      documentsDir: getApplicationDocumentsDirectory().then((dir) =>
+          Directory(p.join(dir.path, _SUB_DIR_NAME)).create(recursive: true)),
       name: T.toString(),
       defaultCreator: defaultCreator,
     );
@@ -113,10 +125,13 @@ class SimpleJsonPersistence<T extends HasToJson> {
           } on FormatException catch (e, stackTrace) {
             if (data == null || data.isEmpty) {
               _logger.shout(
-                  '$name: json file is compltely empty. for some reason corrupted? (${data?.length})', e, stackTrace);
+                  '$name: json file is compltely empty. for some reason corrupted? (${data?.length})',
+                  e,
+                  stackTrace);
               throw _EXCEPTION_FORCE_DEFAULT;
             }
-            _logger.severe('$name: Persisted json file was corrupted.', e, stackTrace);
+            _logger.severe(
+                '$name: Persisted json file was corrupted.', e, stackTrace);
             _logger.severe('Contents of json file: $data');
             rethrow;
           }
@@ -136,7 +151,8 @@ class SimpleJsonPersistence<T extends HasToJson> {
   Future<File> save(T value) {
     _cachedValue = Future.value(value);
     _onValueChanged.add(value);
-    return file.then((file) => file.writeAsString(json.encode(value.toJson()), flush: true));
+    return file.then(
+        (file) => file.writeAsString(json.encode(value.toJson()), flush: true));
   }
 
   T _createDefault() => defaultCreator == null ? null : defaultCreator();
@@ -149,8 +165,8 @@ class SimpleJsonPersistence<T extends HasToJson> {
     _onValueChanged.add(_createDefault());
   }
 
-  /// Removes this store from memory. Probably not really useful in a real world app and should not be used outside
-  /// of testing.
+  /// Removes this store from memory. Probably not really useful in a
+  /// real world app and should not be used outside of testing.
   @visibleForTesting
   Future<void> dispose() async {
     _storageSingletons.remove(name);

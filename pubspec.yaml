@@ -1,6 +1,6 @@
 name: simple_json_persistence
 description: Flutter data storage based on simple json files.
-version: 0.1.0
+version: 0.1.0+1
 author: Herbert Poul <herbert@poul.at>
 homepage: https://github.com/hpoul/simple_json_persistence
 
