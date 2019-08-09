@@ -5,7 +5,7 @@ coverage_task:
   environment:
     CODECOV_TOKEN: ENCRYPTED[135748d068d2cf8d81be783cfa2c198f9c359fdbfa0afff5732ff464d7b43fc6b2ba3ff40318fb39e5284ed7a95722fe]
   test_script:
-    - tools/test-coverage.sh
+    - tool/test-coverage.sh
 analyze_task:
   name: "Analyzer"
   test_script: tools/test-analyze.sh

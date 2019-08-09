@@ -96,3 +96,5 @@ build/
 # Flutter packages should exclude pubspec.lock
 
 /pubspec.lock
+/coverage
+
