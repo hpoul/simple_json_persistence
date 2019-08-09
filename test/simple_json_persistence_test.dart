@@ -35,7 +35,7 @@ void main() {
     const defaultValue = Dummy(stringTest: 'default', intTest: 9);
     final store = SimpleJsonPersistence.forType(Dummy.fromJson,
         defaultCreator: () => defaultValue);
-    expect(await store.loadOrDefault(), defaultValue);
+    expect(await store.load(), defaultValue);
   });
   test('change stream', () async {
     final store = SimpleJsonPersistence.forType(Dummy.fromJson);
@@ -64,6 +64,34 @@ void main() {
     await store.load();
     await store.save(objValue);
     await store.dispose();
+  });
+  test('corrupted empty file', () async {
+    // when file was emptied, we expect default value to be created.
+    {
+      const defaultValue = Dummy(stringTest: 'default');
+      final store = SimpleJsonPersistence.forType(Dummy.fromJson,
+          defaultCreator: () => defaultValue);
+      final file = await store.file;
+      await store.save(objValue);
+      await store.dispose();
+
+      expect(file.existsSync(), isTrue);
+      expect(file.lengthSync(), greaterThan(0));
+      await file.writeAsString('');
+    }
+    {
+      const defaultValue = Dummy(stringTest: 'default');
+      final store = SimpleJsonPersistence.forType(Dummy.fromJson,
+          defaultCreator: () => defaultValue);
+      expect(await store.load(), defaultValue);
+    }
+  });
+  test('corrupted, invalid json file', () async {
+    // when file contains corrupted content, we expect an exception.
+    final store = SimpleJsonPersistence.forType(Dummy.fromJson);
+    final file = await store.file;
+    await file.writeAsString('invalid');
+    expect(store.load(), throwsFormatException);
   });
 }
 

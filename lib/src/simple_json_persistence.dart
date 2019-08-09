@@ -54,6 +54,7 @@ class SimpleJsonPersistence<T extends HasToJson> {
   final Future<Directory> documentsDir;
   Future<File> _file;
 
+  @visibleForTesting
   Future<File> get file => _file ??= _init();
 
   Future<File> _init() => documentsDir
@@ -67,7 +68,7 @@ class SimpleJsonPersistence<T extends HasToJson> {
   /// Stream with the current value as first event,
   /// concatenated with [onValueChanged].
   Stream<T> get onValueChangedAndLoad =>
-      Observable.fromFuture(loadOrDefault()).concatWith([onValueChanged]);
+      Observable.fromFuture(load()).concatWith([onValueChanged]);
 
   Observable<T> onValueChangedOrDefault(Future<T> defaultValue) =>
       Observable<T>.concat([
@@ -102,10 +103,6 @@ class SimpleJsonPersistence<T extends HasToJson> {
       return storage as SimpleJsonPersistence<
           T>; //Future.value(storage as SimpleJsonPersistence<T>);
     }
-//    final storeSingleton = (SimpleJsonPersistence<T> storage) {
-//      storageSingletons[name] = storage;
-//      return storage;
-//    };
 
     return _storageSingletons[name] = SimpleJsonPersistence<T>._(
       fromJson: fromJson,
@@ -116,9 +113,15 @@ class SimpleJsonPersistence<T extends HasToJson> {
     );
   }
 
-  Future<T> loadOrDefault() async => await load() ?? _createDefault();
+  /// Loads and deserializes data from storage. It is safe to be called
+  /// multiple times.
+  /// Subsequent calls will return the same future. If loaded, the cached
+  /// value will be returned. ([cachedValue]).
+  /// If file does not exist the default value ([defaultCreator]) will be
+  /// returned.
+  Future<T> load() async => await _load() ?? _createDefault();
 
-  Future<T> load() async {
+  Future<T> _load() async {
     final f = await file;
     if (!f.existsSync()) {
       return Future.value(_createDefault());
