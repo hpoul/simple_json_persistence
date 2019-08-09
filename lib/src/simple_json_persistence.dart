@@ -42,8 +42,9 @@ class SimpleJsonPersistence<T extends HasToJson> {
   }
 
   factory SimpleJsonPersistence.forType(FromJson<T> fromJson,
-      {T Function() defaultCreator}) {
-    return getForTypeSync(fromJson, defaultCreator: defaultCreator);
+      {T Function() defaultCreator, String customName}) {
+    return getForTypeSync(fromJson,
+        defaultCreator: defaultCreator, customName: customName);
   }
 
   /// Name of the store (used as file name for the .json file)
@@ -65,8 +66,8 @@ class SimpleJsonPersistence<T extends HasToJson> {
 
   /// Stream with the current value as first event,
   /// concatenated with [onValueChanged].
-  Stream<T> get onValueChangedAndLoad => Observable<T>.concat(
-      [Observable.fromFuture(loadOrDefault()), onValueChanged]);
+  Stream<T> get onValueChangedAndLoad =>
+      Observable.fromFuture(loadOrDefault()).concatWith([onValueChanged]);
 
   Observable<T> onValueChangedOrDefault(Future<T> defaultValue) =>
       Observable<T>.concat([
@@ -92,8 +93,10 @@ class SimpleJsonPersistence<T extends HasToJson> {
 
   static SimpleJsonPersistence<T> getForTypeSync<T extends HasToJson>(
       FromJson<T> fromJson,
-      {T Function() defaultCreator}) {
-    final String name = T.toString();
+      {T Function() defaultCreator,
+      String customName}) {
+    final String name =
+        customName == null ? T.toString() : '${T.toString()}.$customName';
     final storage = _storageSingletons[name];
     if (storage != null) {
       return storage as SimpleJsonPersistence<
@@ -108,7 +111,7 @@ class SimpleJsonPersistence<T extends HasToJson> {
       fromJson: fromJson,
       documentsDir: getApplicationDocumentsDirectory().then((dir) =>
           Directory(p.join(dir.path, _SUB_DIR_NAME)).create(recursive: true)),
-      name: T.toString(),
+      name: name,
       defaultCreator: defaultCreator,
     );
   }
@@ -179,7 +182,9 @@ class SimpleJsonPersistence<T extends HasToJson> {
   /// real world app and should not be used outside of testing.
   @visibleForTesting
   Future<void> dispose() async {
-    _storageSingletons.remove(name);
+    final removed = _storageSingletons.remove(name);
+    assert(removed == this);
+    await _onValueChanged.close();
     _cachedValueLoadingFuture = null;
   }
 
