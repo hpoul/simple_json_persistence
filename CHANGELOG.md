@@ -1,4 +1,4 @@
-## [0.1.1+1] - 2019-08-17
+## [0.1.1+1] - 2019-08-19
 
 * Added LICENSE file and more documentation.
 

@@ -1,14 +1,15 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:meta/meta.dart';
 import 'package:simple_json_persistence/simple_json_persistence.dart';
 
 import 'test_util.dart';
 
 void main() {
   setUpAll(() async {
-    await TestUtil.mockPathProvider();
+    SimpleJsonPersistence.defaultBaseDirectoryBuilder =
+        await TestUtil.baseDirectoryBuilder();
   });
   setUp(() async {
     final store = SimpleJsonPersistence.forType(Dummy.fromJson);

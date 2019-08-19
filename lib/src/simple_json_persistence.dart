@@ -18,6 +18,7 @@ abstract class HasToJson {
 }
 
 typedef FromJson<T> = T Function(Map<String, dynamic> json);
+typedef BaseDirectoryBuilder = Future<Directory> Function();
 
 /// Simple storage for any objects which can be serialized to json.
 ///
@@ -46,6 +47,11 @@ class SimpleJsonPersistence<T extends HasToJson> {
     return getForTypeSync(fromJson,
         defaultCreator: defaultCreator, customName: customName);
   }
+
+  @visibleForTesting
+  static BaseDirectoryBuilder defaultBaseDirectoryBuilder = () =>
+      getApplicationDocumentsDirectory()
+          .then((dir) => Directory(p.join(dir.path, _SUB_DIR_NAME)));
 
   /// Name of the store (used as file name for the .json file)
   final String name;
@@ -88,15 +94,23 @@ class SimpleJsonPersistence<T extends HasToJson> {
   static final Map<String, SimpleJsonPersistence<dynamic>> _storageSingletons =
       {};
 
+  @Deprecated('Use constructor instead.')
   static Future<SimpleJsonPersistence<T>> getForType<T extends HasToJson>(
-          FromJson<T> fromJson,
-          {T Function() defaultCreator}) =>
-      Future.value(getForTypeSync(fromJson, defaultCreator: defaultCreator));
+    FromJson<T> fromJson, {
+    T Function() defaultCreator,
+  }) =>
+      Future.value(getForTypeSync(
+        fromJson,
+        defaultCreator: defaultCreator,
+      ));
 
   static SimpleJsonPersistence<T> getForTypeSync<T extends HasToJson>(
-      FromJson<T> fromJson,
-      {T Function() defaultCreator,
-      String customName}) {
+    FromJson<T> fromJson, {
+    T Function() defaultCreator,
+    String customName,
+    BaseDirectoryBuilder baseDirectoryBuilder,
+  }) {
+    baseDirectoryBuilder ??= defaultBaseDirectoryBuilder;
     final String name =
         customName == null ? T.toString() : '${T.toString()}.$customName';
     final storage = _storageSingletons[name];
@@ -107,8 +121,8 @@ class SimpleJsonPersistence<T extends HasToJson> {
 
     return _storageSingletons[name] = SimpleJsonPersistence<T>._(
       fromJson: fromJson,
-      documentsDir: getApplicationDocumentsDirectory().then((dir) =>
-          Directory(p.join(dir.path, _SUB_DIR_NAME)).create(recursive: true)),
+      documentsDir:
+          baseDirectoryBuilder().then((dir) => dir.create(recursive: true)),
       name: name,
       defaultCreator: defaultCreator,
     );
