@@ -180,6 +180,7 @@ class SimpleJsonPersistence<T extends HasToJson> {
   }
 
   Future<File> save(T value) {
+    _cachedValue = value;
     _cachedValueLoadingFuture = Future.value(value);
     _onValueChanged.add(value);
     return file.then(
@@ -203,12 +204,14 @@ class SimpleJsonPersistence<T extends HasToJson> {
     final removed = _storageSingletons.remove(name);
     assert(removed == this);
     await _onValueChanged.close();
+    _cachedValue = null;
     _cachedValueLoadingFuture = null;
   }
 
   T _updateValue(T value) {
+    _logger.finest('$name updating value.');
     _onValueChanged.add(value);
-    _cachedValueLoadingFuture = null;
+    _cachedValueLoadingFuture = Future.value(value);
     _cachedValue = value;
     return value;
   }
