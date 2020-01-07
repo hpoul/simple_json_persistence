@@ -9,8 +9,8 @@
 !.idea/dictionaries
 !.idea/dictionaries/*
 !.idea/inspectionProfiles/*
-!.idea/codeStyles
-!.idea/codeStyles/*
+#!.idea/codeStyles
+#!.idea/codeStyles/*
 *.iml
 
 # Java/Kotlin/Android
@@ -97,4 +97,5 @@ build/
 
 /pubspec.lock
 /coverage
+flutter_export_environment.sh
 

@@ -1,3 +1,7 @@
+## [0.2.0] - 2019-01-07
+
+* Upgrade to rxdart 0.23
+
 ## [0.1.1+2] - 2019-09-16
 
 * Possible bug fix not correctly caching loaded files.

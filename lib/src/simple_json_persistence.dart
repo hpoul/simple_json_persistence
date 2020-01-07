@@ -74,11 +74,11 @@ class SimpleJsonPersistence<T extends HasToJson> {
   /// Stream with the current value as first event,
   /// concatenated with [onValueChanged].
   Stream<T> get onValueChangedAndLoad =>
-      Observable.fromFuture(load()).concatWith([onValueChanged]);
+      Stream.fromFuture(load()).concatWith([onValueChanged]);
 
-  Observable<T> onValueChangedOrDefault(Future<T> defaultValue) =>
-      Observable<T>.concat([
-        Observable.fromFuture(_cachedValueOrLoading ?? defaultValue),
+  Stream<T> onValueChangedOrDefault(Future<T> defaultValue) =>
+      Rx.concat<T>([
+        Stream.fromFuture(_cachedValueOrLoading ?? defaultValue),
         onValueChanged,
       ]);
   Future<T> _cachedValueLoadingFuture;
@@ -111,7 +111,7 @@ class SimpleJsonPersistence<T extends HasToJson> {
     BaseDirectoryBuilder baseDirectoryBuilder,
   }) {
     baseDirectoryBuilder ??= defaultBaseDirectoryBuilder;
-    final String name =
+    final name =
         customName == null ? T.toString() : '${T.toString()}.$customName';
     final storage = _storageSingletons[name];
     if (storage != null) {
