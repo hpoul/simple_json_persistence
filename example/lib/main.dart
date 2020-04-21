@@ -34,8 +34,9 @@ class MyApp extends StatelessWidget {
 class SimpleCounter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final store =
-        SimpleJsonPersistence.forType((json) => AppData.fromJson(json), defaultCreator: () => AppData(counter: 0));
+    final store = SimpleJsonPersistence.getForTypeSync(
+        (json) => AppData.fromJson(json),
+        defaultCreator: () => AppData(counter: 0));
     return StreamBuilder<AppData>(
         stream: store.onValueChangedAndLoad,
         initialData: store.cachedValue,
@@ -50,7 +51,9 @@ class SimpleCounter extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: !snapshot.hasData
-                      ? <Widget>[Center(child: const CircularProgressIndicator())]
+                      ? <Widget>[
+                          Center(child: const CircularProgressIndicator())
+                        ]
                       : <Widget>[
                           const Text(
                             'You have pushed the button:',
@@ -77,7 +80,8 @@ class SimpleCounter extends StatelessWidget {
               ),
             ),
             floatingActionButton: FloatingActionButton(
-              onPressed: () => store.save(AppData(counter: snapshot.data.counter + 1)),
+              onPressed: () =>
+                  store.save(AppData(counter: snapshot.data.counter + 1)),
               tooltip: 'Increment',
               child: Icon(Icons.add),
             ),

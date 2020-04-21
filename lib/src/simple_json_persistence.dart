@@ -1,16 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
-import 'package:rxdart/rxdart.dart';
 import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+import 'package:rxdart/rxdart.dart';
+import 'package:simple_json_persistence/src/persistence_base.dart';
+import 'package:simple_json_persistence/src/persistence_noop.dart'
+    if (dart.library.io) 'package:simple_json_persistence/src/persistence_io.dart'
+    if (dart.library.html) 'package:simple_json_persistence/src/persistence_html.dart';
 
 final _logger = Logger('simple_json_persistence');
 
-const _SUB_DIR_NAME = 'json';
 const _EXCEPTION_FORCE_DEFAULT = 'forceDefault';
 
 abstract class HasToJson {
@@ -18,7 +18,6 @@ abstract class HasToJson {
 }
 
 typedef FromJson<T> = T Function(Map<String, dynamic> json);
-typedef BaseDirectoryBuilder = Future<Directory> Function();
 
 /// Simple storage for any objects which can be serialized to json.
 ///
@@ -33,40 +32,27 @@ typedef BaseDirectoryBuilder = Future<Directory> Function();
 class SimpleJsonPersistence<T extends HasToJson> {
   SimpleJsonPersistence._({
     @required this.fromJson,
-    @required this.documentsDir,
     @required this.name,
     this.defaultCreator,
+    @required this.storeBackend,
   })  : assert(fromJson != null),
-        assert(documentsDir != null),
-        assert(name != null) {
-    _logger.finer('storing into: $file');
-  }
+        assert(name != null);
 
-  factory SimpleJsonPersistence.forType(FromJson<T> fromJson,
-      {T Function() defaultCreator, String customName}) {
-    return getForTypeSync(fromJson,
-        defaultCreator: defaultCreator, customName: customName);
-  }
-
-  @visibleForTesting
-  static BaseDirectoryBuilder defaultBaseDirectoryBuilder = () =>
-      getApplicationDocumentsDirectory()
-          .then((dir) => Directory(p.join(dir.path, _SUB_DIR_NAME)));
+//  factory SimpleJsonPersistence.forType(FromJson<T> fromJson,
+//      {T Function() defaultCreator, String customName}) {
+//    return getForTypeSync(fromJson,
+//        defaultCreator: defaultCreator, customName: customName);
+//  }
 
   /// Name of the store (used as file name for the .json file)
   final String name;
   FromJson<T> fromJson;
   final T Function() defaultCreator;
-  final Future<Directory> documentsDir;
-  Future<File> _file;
-
-  @visibleForTesting
-  Future<File> get file => _file ??= _init();
-
-  Future<File> _init() => documentsDir
-      .then((documentsDir) => File(p.join(documentsDir.path, '$name.json')));
-
   final PublishSubject<T> _onValueChanged = PublishSubject<T>();
+  final StoreBackend storeBackend;
+  Future<Store> _storeCached;
+
+  Future<Store> get _store => _storeCached ??= storeBackend.storeForFile(name);
 
   /// Stream which will receive a new notification on every [save] call.
   Stream<T> get onValueChanged => _onValueChanged.stream;
@@ -76,8 +62,7 @@ class SimpleJsonPersistence<T extends HasToJson> {
   Stream<T> get onValueChangedAndLoad =>
       Stream.fromFuture(load()).concatWith([onValueChanged]);
 
-  Stream<T> onValueChangedOrDefault(Future<T> defaultValue) =>
-      Rx.concat<T>([
+  Stream<T> onValueChangedOrDefault(Future<T> defaultValue) => Rx.concat<T>([
         Stream.fromFuture(_cachedValueOrLoading ?? defaultValue),
         onValueChanged,
       ]);
@@ -94,23 +79,12 @@ class SimpleJsonPersistence<T extends HasToJson> {
   static final Map<String, SimpleJsonPersistence<dynamic>> _storageSingletons =
       {};
 
-  @Deprecated('Use constructor instead.')
-  static Future<SimpleJsonPersistence<T>> getForType<T extends HasToJson>(
-    FromJson<T> fromJson, {
-    T Function() defaultCreator,
-  }) =>
-      Future.value(getForTypeSync(
-        fromJson,
-        defaultCreator: defaultCreator,
-      ));
-
   static SimpleJsonPersistence<T> getForTypeSync<T extends HasToJson>(
     FromJson<T> fromJson, {
     T Function() defaultCreator,
     String customName,
-    BaseDirectoryBuilder baseDirectoryBuilder,
+    StoreBackend storeBackend,
   }) {
-    baseDirectoryBuilder ??= defaultBaseDirectoryBuilder;
     final name =
         customName == null ? T.toString() : '${T.toString()}.$customName';
     final storage = _storageSingletons[name];
@@ -121,10 +95,9 @@ class SimpleJsonPersistence<T extends HasToJson> {
 
     return _storageSingletons[name] = SimpleJsonPersistence<T>._(
       fromJson: fromJson,
-      documentsDir:
-          baseDirectoryBuilder().then((dir) => dir.create(recursive: true)),
       name: name,
       defaultCreator: defaultCreator,
+      storeBackend: storeBackend ?? createStoreBackend(),
     );
   }
 
@@ -137,8 +110,7 @@ class SimpleJsonPersistence<T extends HasToJson> {
   Future<T> load() async => await _load() ?? _createDefault();
 
   Future<T> _load() async {
-    final f = await file;
-    if (!f.existsSync()) {
+    if (!await (await _store).exists()) {
       return Future.value(_createDefault());
     }
     if (_cachedValueLoadingFuture != null) {
@@ -147,8 +119,8 @@ class SimpleJsonPersistence<T extends HasToJson> {
     _logger.fine('Deserializing $name');
 //    file.readAsString().then((data) => _logger.finest('Loading: $data'));
 
-    return _cachedValueLoadingFuture = f
-        .readAsString()
+    return _cachedValueLoadingFuture = (await _store)
+        .load()
         .then((data) {
           try {
             return json.decode(data) as Map<String, dynamic>;
@@ -179,21 +151,19 @@ class SimpleJsonPersistence<T extends HasToJson> {
         });
   }
 
-  Future<File> save(T value) {
+  Future<void> save(T value) async {
     _cachedValue = value;
     _cachedValueLoadingFuture = Future.value(value);
     _onValueChanged.add(value);
-    return file.then(
-        (file) => file.writeAsString(json.encode(value.toJson()), flush: true));
+    return (await _store).save(json.encode(value.toJson()));
+//    .then(
+//        (file) => file.writeAsString(json.encode(value.toJson()), flush: true));
   }
 
   T _createDefault() => defaultCreator == null ? null : defaultCreator();
 
   Future<void> delete() async {
-    final f = await file;
-    if (f.existsSync()) {
-      await f.delete();
-    }
+    await (await _store).delete();
     _onValueChanged.add(_createDefault());
   }
 

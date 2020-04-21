@@ -3,43 +3,68 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:meta/meta.dart';
 import 'package:simple_json_persistence/simple_json_persistence.dart';
+import 'package:simple_json_persistence/src/persistence_io.dart';
 
 import 'test_util.dart';
 
+class DummyStoreBackend extends StoreBackend {
+  final _store = DummyStore();
+
+  @override
+  Future<Store> storeForFile(String name) async => _store;
+}
+
+class DummyStore extends Store {
+  String value;
+
+  @override
+  Future<void> delete() async => value = null;
+
+  @override
+  Future<bool> exists() async => value != null;
+
+  @override
+  Future<String> load() async => value;
+
+  @override
+  Future<void> save(String data) async => value = data;
+}
+
 void main() {
   setUpAll(() async {
-    SimpleJsonPersistence.defaultBaseDirectoryBuilder =
+    StoreBackendIo.defaultBaseDirectoryBuilder =
         await TestUtil.baseDirectoryBuilder();
   });
   setUp(() async {
-    final store = SimpleJsonPersistence.forType(Dummy.fromJson);
+    final store = SimpleJsonPersistence.getForTypeSync(Dummy.fromJson);
     await store.delete();
     await store.dispose();
   });
   const objValue = Dummy(stringTest: 'blubb', intTest: 1);
   test('Test Simple Storage', () async {
     {
-      final store = SimpleJsonPersistence.forType(Dummy.fromJson);
+      final store = SimpleJsonPersistence.getForTypeSync(Dummy.fromJson);
       expect(await store.load(), isNull);
       await store.save(objValue);
       // getting store a second time should get the same instance.
-      expect(SimpleJsonPersistence.forType(Dummy.fromJson), same(store));
+      expect(SimpleJsonPersistence.getForTypeSync(Dummy.fromJson), same(store));
       await store.dispose();
-      expect(SimpleJsonPersistence.forType(Dummy.fromJson), notSame(store));
+      expect(
+          SimpleJsonPersistence.getForTypeSync(Dummy.fromJson), notSame(store));
     }
 
-    final store = SimpleJsonPersistence.forType(Dummy.fromJson);
+    final store = SimpleJsonPersistence.getForTypeSync(Dummy.fromJson);
     expect(await store.load(), objValue);
     expect(await store.load(), notSame(objValue));
   });
   test('Default Creator', () async {
     const defaultValue = Dummy(stringTest: 'default', intTest: 9);
-    final store = SimpleJsonPersistence.forType(Dummy.fromJson,
+    final store = SimpleJsonPersistence.getForTypeSync(Dummy.fromJson,
         defaultCreator: () => defaultValue);
     expect(await store.load(), defaultValue);
   });
   test('change stream', () async {
-    final store = SimpleJsonPersistence.forType(Dummy.fromJson);
+    final store = SimpleJsonPersistence.getForTypeSync(Dummy.fromJson);
     expect(
         store.onValueChanged,
         emitsInOrder(<dynamic>[
@@ -51,7 +76,7 @@ void main() {
   });
   test('change stream with default', () async {
     const defaultValue = Dummy(stringTest: 'default');
-    final store = SimpleJsonPersistence.forType(Dummy.fromJson,
+    final store = SimpleJsonPersistence.getForTypeSync(Dummy.fromJson,
         defaultCreator: () => defaultValue);
     expect(
         store.onValueChangedAndLoad,
@@ -69,29 +94,38 @@ void main() {
   test('corrupted empty file', () async {
     // when file was emptied, we expect default value to be created.
     {
+      final storeBackend = DummyStoreBackend();
       const defaultValue = Dummy(stringTest: 'default');
-      final store = SimpleJsonPersistence.forType(Dummy.fromJson,
-          defaultCreator: () => defaultValue);
-      final file = await store.file;
+      final store = SimpleJsonPersistence.getForTypeSync(
+        Dummy.fromJson,
+        defaultCreator: () => defaultValue,
+        storeBackend: storeBackend,
+      );
       await store.save(objValue);
       await store.dispose();
 
-      expect(file.existsSync(), isTrue);
-      expect(file.lengthSync(), greaterThan(0));
-      await file.writeAsString('');
+      final f = storeBackend._store;
+
+      expect(f.value, isNotNull);
+      expect(f.value, hasLength(greaterThan(0)));
+      f.value = '';
     }
     {
       const defaultValue = Dummy(stringTest: 'default');
-      final store = SimpleJsonPersistence.forType(Dummy.fromJson,
+      final store = SimpleJsonPersistence.getForTypeSync(Dummy.fromJson,
           defaultCreator: () => defaultValue);
       expect(await store.load(), defaultValue);
     }
   });
   test('corrupted, invalid json file', () async {
     // when file contains corrupted content, we expect an exception.
-    final store = SimpleJsonPersistence.forType(Dummy.fromJson);
-    final file = await store.file;
-    await file.writeAsString('invalid');
+    final storeBackend = DummyStoreBackend();
+    final store = SimpleJsonPersistence.getForTypeSync(
+      Dummy.fromJson,
+      storeBackend: storeBackend,
+    );
+    final f = storeBackend._store;
+    f.value = 'invalid';
     expect(store.load(), throwsFormatException);
   });
 }

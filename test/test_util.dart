@@ -14,7 +14,7 @@ class TestUtil {
   static Future<BaseDirectoryBuilder> baseDirectoryBuilder() async {
     final directory = await Directory.systemTemp
         .createTemp('flutter_simple_json_persistence_test');
-    return () async => directory;
+    return () async => directory.path;
   }
 
   static Future<void> mockPathProvider() async {

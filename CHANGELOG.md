@@ -1,3 +1,8 @@
+## [1.0.0-dev.1]  - 2020-04-21
+
+* Refactored api, made it more simple
+* Support for flutter web by using local s torage.
+
 ## [0.2.0] - 2019-01-07
 
 * Upgrade to rxdart 0.23
