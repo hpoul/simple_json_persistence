@@ -25,7 +25,8 @@ class StoreBackendIo extends StoreBackend {
   final BaseDirectoryBuilder documentsDirBuilder;
 
   Future<File> _init(String name) => documentsDirBuilder()
-      .then((documentsDir) => File(p.join(documentsDir, '$name.json')));
+      .then((documentsDir) => File(p.join(documentsDir, '$name.json')))
+      .then((file) => file..parent.create(recursive: true));
 
   @override
   Future<Store> storeForFile(String name) async => StoreIo(await _init(name));
@@ -38,7 +39,7 @@ StoreBackend createStoreBackend([BaseDirectoryBuilder baseDirectoryBuilder]) =>
 
 class StoreIo extends Store {
   StoreIo(this._file) {
-    _logger.fine('Writing i nto $_file');
+    _logger.fine('Writing into $_file');
   }
 
   final File _file;
