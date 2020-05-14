@@ -1,3 +1,11 @@
+## [1.0.0]
+
+* Added .update() convenience method.
+
+## [1.0.0-dev.2]
+
+* make sure directories are created during initialization.
+
 ## [1.0.0-dev.1]  - 2020-04-21
 
 * Refactored api, made it more simple

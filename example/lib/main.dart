@@ -52,7 +52,7 @@ class SimpleCounter extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: !snapshot.hasData
                       ? <Widget>[
-                          Center(child: const CircularProgressIndicator())
+                          const Center(child: CircularProgressIndicator())
                         ]
                       : <Widget>[
                           const Text(
@@ -64,7 +64,7 @@ class SimpleCounter extends StatelessWidget {
                             children: <Widget>[
                               Text(
                                 '${snapshot.data.counter}',
-                                style: Theme.of(context).textTheme.display1,
+                                style: Theme.of(context).textTheme.headline4,
                               ),
                               const Text(' times')
                             ],

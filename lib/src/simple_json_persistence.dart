@@ -185,4 +185,15 @@ class SimpleJsonPersistence<T extends HasToJson> {
     _cachedValue = value;
     return value;
   }
+
+  /// Convenience method which allows simple updating of data.
+  /// The [updater] gets the current value as parameter and is expected
+  /// to return a copy with the new values which will be persisted afterwards.
+  Future<T> update(T Function(T data) updater) async {
+    final newData = updater(await load());
+    if (newData != null) {
+      await save(newData);
+    }
+    return newData;
+  }
 }
