@@ -24,9 +24,11 @@ class StoreBackendIo extends StoreBackend {
 
   final BaseDirectoryBuilder documentsDirBuilder;
 
-  Future<File> _init(String name) => documentsDirBuilder()
-      .then((documentsDir) => File(p.join(documentsDir, '$name.json')))
-      .then((file) => file..parent.create(recursive: true));
+  Future<File> _init(String name) async {
+    final file = File(p.join(await documentsDirBuilder(), '$name.json'));
+    await file.parent.create(recursive: true);
+    return file;
+  }
 
   @override
   Future<Store> storeForFile(String name) async => StoreIo(await _init(name));

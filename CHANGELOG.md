@@ -1,3 +1,7 @@
+## [1.0.0+1]
+
+* Fixed possible race condition with creating folders not being `await`ed.
+
 ## [1.0.0]
 
 * Added .update() convenience method.
