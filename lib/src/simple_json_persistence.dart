@@ -8,10 +8,9 @@ import 'package:simple_json_persistence/src/persistence_base.dart';
 import 'package:simple_json_persistence/src/persistence_noop.dart'
     if (dart.library.io) 'package:simple_json_persistence/src/persistence_io.dart'
     if (dart.library.html) 'package:simple_json_persistence/src/persistence_html.dart';
+import 'package:synchronized/synchronized.dart';
 
 final _logger = Logger('simple_json_persistence');
-
-const _EXCEPTION_FORCE_DEFAULT = 'forceDefault';
 
 abstract class HasToJson {
   Map<String, dynamic> toJson();
@@ -110,45 +109,40 @@ class SimpleJsonPersistence<T extends HasToJson> {
   Future<T> load() async => await _load() ?? _createDefault();
 
   Future<T> _load() async {
-    if (!await (await _store).exists()) {
-      return Future.value(_createDefault());
-    }
     if (_cachedValueLoadingFuture != null) {
       return _cachedValueLoadingFuture;
     }
     _logger.fine('Deserializing $name');
 //    file.readAsString().then((data) => _logger.finest('Loading: $data'));
 
-    return _cachedValueLoadingFuture = (await _store)
-        .load()
-        .then((data) {
-          try {
-            return json.decode(data) as Map<String, dynamic>;
-          } on FormatException catch (e, stackTrace) {
-            if (data == null || data.isEmpty) {
-              _logger.shout(
-                  '$name: json file is compltely empty. for some reason corrupted? (${data?.length})',
-                  e,
-                  stackTrace);
-              throw _EXCEPTION_FORCE_DEFAULT;
-            }
-            _logger.severe(
-                '$name: Persisted json file was corrupted.', e, stackTrace);
-            _logger.severe('Contents of json file: $data');
-            rethrow;
-          }
-        })
-        .then((json) => fromJson(json))
-        .catchError((dynamic error, StackTrace stackTrace) {
-          _logger.fine(
-              'forcing using of default value for $name', error, stackTrace);
-          return _createDefault();
-        }, test: (error) => error == _EXCEPTION_FORCE_DEFAULT)
-        .then((value) => _updateValue(value))
-        .catchError((dynamic error, StackTrace stackTrace) {
-          _logger.severe('Error while loading data', error, stackTrace);
-          return Future<T>.error(error, stackTrace);
-        });
+    return _cachedValueLoadingFuture = (() async {
+      final store = await _store;
+      if (!await store.exists()) {
+        return _createDefault();
+      }
+      final data = await store.load();
+      try {
+        final ret = fromJson(json.decode(data) as Map<String, dynamic>);
+        return _updateValue(ret);
+      } on FormatException catch (e, stackTrace) {
+        if (data == null || data.isEmpty) {
+          _logger.shout(
+              '$name: json file is completely empty. '
+              'for some reason corrupted? (${data?.length})'
+              'Using default value.',
+              e,
+              stackTrace);
+          return _updateValue(_createDefault());
+        }
+        _logger.severe(
+            '$name: Persisted json file was corrupted.', e, stackTrace);
+        _logger.severe('Contents of json file: $data');
+        rethrow;
+      } catch (e, stackTrace) {
+        _logger.severe('Error while loading data', e, stackTrace);
+        rethrow;
+      }
+    })();
   }
 
   Future<void> save(T value) async {
@@ -186,14 +180,18 @@ class SimpleJsonPersistence<T extends HasToJson> {
     return value;
   }
 
+  final _updateLock = Lock();
+
   /// Convenience method which allows simple updating of data.
   /// The [updater] gets the current value as parameter and is expected
   /// to return a copy with the new values which will be persisted afterwards.
   Future<T> update(T Function(T data) updater) async {
-    final newData = updater(await load());
-    if (newData != null) {
-      await save(newData);
-    }
-    return newData;
+    return _updateLock.synchronized(() async {
+      final newData = updater(await load());
+      if (newData != null) {
+        await save(newData);
+      }
+      return newData;
+    });
   }
 }

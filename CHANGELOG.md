@@ -1,3 +1,9 @@
+## [1.0.1]
+
+* Make sure only one call to [update] runs at a time.
+  (ie. fix race condition when two calls to update happens at the same time, 
+  one would be overwritten by the other)
+
 ## [1.0.0+1]
 
 * Fixed possible race condition with creating folders not being `await`ed.

@@ -1,11 +1,16 @@
 import 'dart:convert';
 
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:logging/logging.dart';
+import 'package:logging_appenders/logging_appenders.dart';
 import 'package:meta/meta.dart';
 import 'package:simple_json_persistence/simple_json_persistence.dart';
 import 'package:simple_json_persistence/src/persistence_io.dart';
 
 import 'test_util.dart';
+
+final _logger = Logger('simple_json_persistence_test');
 
 class DummyStoreBackend extends StoreBackend {
   final _store = DummyStore();
@@ -24,18 +29,22 @@ class DummyStore extends Store {
   Future<bool> exists() async => value != null;
 
   @override
-  Future<String> load() async => value;
+  Future<String> load() async =>
+      Future.delayed(const Duration(milliseconds: 1), () => value);
 
   @override
-  Future<void> save(String data) async => value = data;
+  Future<void> save(String data) async =>
+      Future.delayed(const Duration(milliseconds: 1), () => value = data);
 }
 
 void main() {
+  PrintAppender.setupLogging();
   setUpAll(() async {
     StoreBackendIo.defaultBaseDirectoryBuilder =
         await TestUtil.baseDirectoryBuilder();
   });
   setUp(() async {
+    PrintAppender.setupLogging();
     final store = SimpleJsonPersistence.getForTypeSync(Dummy.fromJson);
     await store.delete();
     await store.dispose();
@@ -127,6 +136,37 @@ void main() {
     final f = storeBackend._store;
     f.value = 'invalid';
     expect(store.load(), throwsFormatException);
+  });
+  test('race condition in update()', () {
+    fakeAsync((async) {
+      final storeBackend = DummyStoreBackend();
+      final store = SimpleJsonPersistence.getForTypeSync(
+        Dummy.fromJson,
+        defaultCreator: () => const Dummy(stringTest: 'first', intTest: 1),
+        storeBackend: storeBackend,
+      );
+//      final f = storeBackend._store;
+//      final result = store
+//          .save(Dummy(stringTest: 'first', intTest: 1))
+//          .then((saved) => _logger.finest('saved'));
+      _logger.finest('Flushing timers.');
+      async.flushTimers();
+      _logger.finest('starting update...');
+      store.update((data) {
+        _logger.finest('1 Updating $data');
+        return Dummy(stringTest: data.stringTest, intTest: 2);
+      }).then((value) => _logger.finest('1 Updated $value'));
+      store.update((data) {
+        _logger.finest('2. Updating $data');
+        return Dummy(stringTest: 'third', intTest: data.intTest);
+      }).then((value) => _logger.finest('2 Updated $value'));
+      async.elapse(const Duration(milliseconds: 250));
+      _logger.finest('elapsed.');
+      expect(store.load(),
+          completion(const Dummy(stringTest: 'third', intTest: 2)));
+      async.flushTimers();
+      _logger.finest('all done.');
+    });
   });
 }
 
