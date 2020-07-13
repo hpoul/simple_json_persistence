@@ -1,3 +1,8 @@
+## [1.0.2]
+
+* Use [getLibraryDirectory] on windows instead of [getApplicationDocumentsDirectory].
+* Allow customizing base directory via [StoreBackend.defaultBaseDirectoryBuilder].
+
 ## [1.0.1]
 
 * Make sure only one call to [update] runs at a time.

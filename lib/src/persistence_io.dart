@@ -19,7 +19,10 @@ class StoreBackendIo extends StoreBackend {
 
   @visibleForTesting
   static BaseDirectoryBuilder defaultBaseDirectoryBuilder = () =>
-      getApplicationDocumentsDirectory()
+      // TODO we should probably also use getLibraryDirectory on iOS?
+      (Platform.isWindows
+              ? getLibraryDirectory()
+              : getApplicationDocumentsDirectory())
           .then((dir) => p.join(dir.path, _SUB_DIR_NAME));
 
   final BaseDirectoryBuilder documentsDirBuilder;
@@ -36,8 +39,9 @@ class StoreBackendIo extends StoreBackend {
 
 StoreBackend createStoreBackend([BaseDirectoryBuilder baseDirectoryBuilder]) =>
     StoreBackendIo._(
-        documentsDirBuilder:
-            baseDirectoryBuilder ?? StoreBackendIo.defaultBaseDirectoryBuilder);
+        documentsDirBuilder: baseDirectoryBuilder ??
+            StoreBackend.defaultBaseDirectoryBuilder ??
+            StoreBackendIo.defaultBaseDirectoryBuilder);
 
 class StoreIo extends Store {
   StoreIo(this._file) {

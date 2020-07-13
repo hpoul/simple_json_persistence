@@ -5,9 +5,6 @@ import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:simple_json_persistence/src/persistence_base.dart';
-import 'package:simple_json_persistence/src/persistence_noop.dart'
-    if (dart.library.io) 'package:simple_json_persistence/src/persistence_io.dart'
-    if (dart.library.html) 'package:simple_json_persistence/src/persistence_html.dart';
 import 'package:synchronized/synchronized.dart';
 
 final _logger = Logger('simple_json_persistence');
@@ -25,7 +22,7 @@ typedef FromJson<T> = T Function(Map<String, dynamic> json);
 /// their changes.
 ///
 /// Each type has one instance of this persistence class
-/// ie. calling [SimpleJsonPersistence.forType] multiple times for
+/// ie. calling [SimpleJsonPersistence.getForTypeSync] multiple times for
 /// the same type will return the same instance.
 /// Once [load] has been called it will be cached/kept in memory forever.
 class SimpleJsonPersistence<T extends HasToJson> {
@@ -78,6 +75,9 @@ class SimpleJsonPersistence<T extends HasToJson> {
   static final Map<String, SimpleJsonPersistence<dynamic>> _storageSingletons =
       {};
 
+  /// Creates a new persistence store for the given type.
+  /// The json file location can be customized by passing in a custom
+  /// [storeBackend] and create it using [StoreBackend.create].
   static SimpleJsonPersistence<T> getForTypeSync<T extends HasToJson>(
     FromJson<T> fromJson, {
     T Function() defaultCreator,
@@ -96,7 +96,7 @@ class SimpleJsonPersistence<T extends HasToJson> {
       fromJson: fromJson,
       name: name,
       defaultCreator: defaultCreator,
-      storeBackend: storeBackend ?? createStoreBackend(),
+      storeBackend: storeBackend ?? StoreBackend.create(),
     );
   }
 
