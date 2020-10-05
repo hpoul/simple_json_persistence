@@ -168,6 +168,24 @@ void main() {
       _logger.finest('all done.');
     });
   });
+  test('delete should clear cached value', () async {
+    final storeBackend = DummyStoreBackend();
+    const defaultValue = Dummy(stringTest: 'default');
+    final store = SimpleJsonPersistence.getForTypeSync(
+      Dummy.fromJson,
+      defaultCreator: () => defaultValue,
+      storeBackend: storeBackend,
+    );
+    await store.save(objValue);
+
+    final data = await store.load();
+    expect(data, objValue);
+
+    await store.delete();
+
+    final after = await store.load();
+    expect(after, defaultValue);
+  });
 }
 
 class Dummy implements HasToJson {

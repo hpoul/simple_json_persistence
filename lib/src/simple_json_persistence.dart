@@ -150,15 +150,13 @@ class SimpleJsonPersistence<T extends HasToJson> {
     _cachedValueLoadingFuture = Future.value(value);
     _onValueChanged.add(value);
     return (await _store).save(json.encode(value.toJson()));
-//    .then(
-//        (file) => file.writeAsString(json.encode(value.toJson()), flush: true));
   }
 
   T _createDefault() => defaultCreator == null ? null : defaultCreator();
 
   Future<void> delete() async {
     await (await _store).delete();
-    _onValueChanged.add(_createDefault());
+    _updateValue(_createDefault());
   }
 
   /// Removes this store from memory. Probably not really useful in a

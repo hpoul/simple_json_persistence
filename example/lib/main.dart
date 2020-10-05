@@ -40,7 +40,7 @@ class SimpleCounter extends StatelessWidget {
     return StreamBuilder<AppData>(
         stream: store.onValueChangedAndLoad,
         initialData: store.cachedValue,
-        builder: (context, snapshot) {
+        builder: (BuildContext context, AsyncSnapshot<AppData> snapshot) {
           return Scaffold(
             appBar: AppBar(
               title: const Text('SimpleJsonPersistence Example'),
@@ -83,7 +83,7 @@ class SimpleCounter extends StatelessWidget {
               onPressed: () =>
                   store.save(AppData(counter: snapshot.data.counter + 1)),
               tooltip: 'Increment',
-              child: Icon(Icons.add),
+              child: const Icon(Icons.add),
             ),
           );
         });

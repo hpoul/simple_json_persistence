@@ -1,3 +1,7 @@
+## [1.0.3]
+
+* Fixed bug where `SimpleJsonPersistence.delete()` did not correctly update cached value.
+
 ## [1.0.2]
 
 * Use [getLibraryDirectory] on windows instead of [getApplicationDocumentsDirectory].
