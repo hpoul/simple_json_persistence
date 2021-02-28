@@ -1,3 +1,7 @@
+## 2.0.0-nullsafety.1
+
+* Support for null safety.
+
 ## [1.0.3]
 
 * Fixed bug where `SimpleJsonPersistence.delete()` did not correctly update cached value.
