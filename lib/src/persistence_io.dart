@@ -14,8 +14,8 @@ const _SUB_DIR_NAME = 'json';
 
 class StoreBackendIo extends StoreBackend {
   StoreBackendIo._({
-    @required this.documentsDirBuilder,
-  }) : assert(documentsDirBuilder != null);
+    required this.documentsDirBuilder,
+  });
 
   @visibleForTesting
   static BaseDirectoryBuilder defaultBaseDirectoryBuilder = () =>
@@ -37,7 +37,7 @@ class StoreBackendIo extends StoreBackend {
   Future<Store> storeForFile(String name) async => StoreIo(await _init(name));
 }
 
-StoreBackend createStoreBackend([BaseDirectoryBuilder baseDirectoryBuilder]) =>
+StoreBackend createStoreBackend([BaseDirectoryBuilder? baseDirectoryBuilder]) =>
     StoreBackendIo._(
         documentsDirBuilder: baseDirectoryBuilder ??
             StoreBackend.defaultBaseDirectoryBuilder ??
@@ -55,7 +55,7 @@ class StoreIo extends Store {
     if (!_file.existsSync()) {
       return;
     }
-    return _file.delete();
+    await _file.delete();
   }
 
   @override

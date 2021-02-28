@@ -10,7 +10,7 @@ class StoreBackendHtml extends StoreBackend {
   }
 }
 
-StoreBackend createStoreBackend([BaseDirectoryBuilder baseDirectoryBuilder]) =>
+StoreBackend createStoreBackend([BaseDirectoryBuilder? baseDirectoryBuilder]) =>
     StoreBackendHtml();
 
 class StoreHtml extends Store {
@@ -31,7 +31,11 @@ class StoreHtml extends Store {
 
   @override
   Future<String> load() async {
-    return _storage[_name];
+    final ret = _storage[_name];
+    if (ret == null) {
+      throw StateError('Store $_name does not yet exist.');
+    }
+    return ret;
   }
 
   @override

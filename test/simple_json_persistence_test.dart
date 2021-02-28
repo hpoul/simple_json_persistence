@@ -4,7 +4,6 @@ import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:logging/logging.dart';
 import 'package:logging_appenders/logging_appenders.dart';
-import 'package:meta/meta.dart';
 import 'package:simple_json_persistence/simple_json_persistence.dart';
 import 'package:simple_json_persistence/src/persistence_io.dart';
 
@@ -20,7 +19,7 @@ class DummyStoreBackend extends StoreBackend {
 }
 
 class DummyStore extends Store {
-  String value;
+  String? value;
 
   @override
   Future<void> delete() async => value = null;
@@ -30,7 +29,7 @@ class DummyStore extends Store {
 
   @override
   Future<String> load() async =>
-      Future.delayed(const Duration(milliseconds: 1), () => value);
+      Future.delayed(const Duration(milliseconds: 1), () => value!);
 
   @override
   Future<void> save(String data) async =>
@@ -154,11 +153,11 @@ void main() {
       _logger.finest('starting update...');
       store.update((data) {
         _logger.finest('1 Updating $data');
-        return Dummy(stringTest: data.stringTest, intTest: 2);
+        return Dummy(stringTest: data!.stringTest, intTest: 2);
       }).then((value) => _logger.finest('1 Updated $value'));
       store.update((data) {
         _logger.finest('2. Updating $data');
-        return Dummy(stringTest: 'third', intTest: data.intTest);
+        return Dummy(stringTest: 'third', intTest: data!.intTest);
       }).then((value) => _logger.finest('2 Updated $value'));
       async.elapse(const Duration(milliseconds: 250));
       _logger.finest('elapsed.');
@@ -189,10 +188,10 @@ void main() {
 }
 
 class Dummy implements HasToJson {
-  const Dummy({@required this.stringTest, this.intTest = 1});
+  const Dummy({required this.stringTest, this.intTest = 1});
 
-  final String stringTest;
-  final int intTest;
+  final String? stringTest;
+  final int? intTest;
 
   @override
   Map<String, dynamic> toJson() => <String, dynamic>{
@@ -200,9 +199,9 @@ class Dummy implements HasToJson {
         'intTest': intTest,
       };
 
-  static Dummy fromJson(Map<String, dynamic> json) => Dummy(
-        stringTest: json['stringTest'] as String,
-        intTest: json['intTest'] as int,
+  static Dummy fromJson(Map<String, dynamic>? json) => Dummy(
+        stringTest: json!['stringTest'] as String?,
+        intTest: json['intTest'] as int?,
       );
 
   @override

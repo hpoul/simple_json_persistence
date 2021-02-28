@@ -13,7 +13,7 @@ abstract class HasToJson {
   Map<String, dynamic> toJson();
 }
 
-typedef FromJson<T> = T Function(Map<String, dynamic> json);
+typedef FromJson<T> = T Function(Map<String, dynamic>? json);
 
 /// Simple storage for any objects which can be serialized to json.
 ///
@@ -27,12 +27,11 @@ typedef FromJson<T> = T Function(Map<String, dynamic> json);
 /// Once [load] has been called it will be cached/kept in memory forever.
 class SimpleJsonPersistence<T extends HasToJson> {
   SimpleJsonPersistence._({
-    @required this.fromJson,
-    @required this.name,
+    required this.fromJson,
+    required this.name,
     this.defaultCreator,
-    @required this.storeBackend,
-  })  : assert(fromJson != null),
-        assert(name != null);
+    required this.storeBackend,
+  });
 
 //  factory SimpleJsonPersistence.forType(FromJson<T> fromJson,
 //      {T Function() defaultCreator, String customName}) {
@@ -43,34 +42,34 @@ class SimpleJsonPersistence<T extends HasToJson> {
   /// Name of the store (used as file name for the .json file)
   final String name;
   FromJson<T> fromJson;
-  final T Function() defaultCreator;
-  final PublishSubject<T> _onValueChanged = PublishSubject<T>();
+  final T Function()? defaultCreator;
+  final PublishSubject<T?> _onValueChanged = PublishSubject<T>();
   final StoreBackend storeBackend;
-  Future<Store> _storeCached;
+  Future<Store>? _storeCached;
 
   Future<Store> get _store => _storeCached ??= storeBackend.storeForFile(name);
 
   /// Stream which will receive a new notification on every [save] call.
-  Stream<T> get onValueChanged => _onValueChanged.stream;
+  Stream<T?> get onValueChanged => _onValueChanged.stream;
 
   /// Stream with the current value as first event,
   /// concatenated with [onValueChanged].
   Stream<T> get onValueChangedAndLoad =>
-      Stream.fromFuture(load()).concatWith([onValueChanged]);
+      Stream.fromFuture(load()).concatWith([onValueChanged]) as Stream<T>;
 
-  Stream<T> onValueChangedOrDefault(Future<T> defaultValue) => Rx.concat<T>([
+  Stream<T?> onValueChangedOrDefault(Future<T> defaultValue) => Rx.concat<T?>([
         Stream.fromFuture(_cachedValueOrLoading ?? defaultValue),
         onValueChanged,
       ]);
-  Future<T> _cachedValueLoadingFuture;
+  Future<T?>? _cachedValueLoadingFuture;
 
-  Future<T> get _cachedValueOrLoading => _cachedValue != null
+  Future<T?>? get _cachedValueOrLoading => _cachedValue != null
       ? Future.value(_cachedValue)
       : _cachedValueLoadingFuture;
-  T _cachedValue;
+  T? _cachedValue;
 
   /// Useful for using as `initialValue` in [StreamBuilder].
-  T get cachedValue => _cachedValue;
+  T? get cachedValue => _cachedValue;
 
   static final Map<String, SimpleJsonPersistence<dynamic>> _storageSingletons =
       {};
@@ -80,9 +79,9 @@ class SimpleJsonPersistence<T extends HasToJson> {
   /// [storeBackend] and create it using [StoreBackend.create].
   static SimpleJsonPersistence<T> getForTypeSync<T extends HasToJson>(
     FromJson<T> fromJson, {
-    T Function() defaultCreator,
-    String customName,
-    StoreBackend storeBackend,
+    T Function()? defaultCreator,
+    String? customName,
+    StoreBackend? storeBackend,
   }) {
     final name =
         customName == null ? T.toString() : '${T.toString()}.$customName';
@@ -106,9 +105,9 @@ class SimpleJsonPersistence<T extends HasToJson> {
   /// value will be returned. ([cachedValue]).
   /// If file does not exist the default value ([defaultCreator]) will be
   /// returned.
-  Future<T> load() async => await _load() ?? _createDefault();
+  Future<T?> load() async => await _load() ?? _createDefault();
 
-  Future<T> _load() async {
+  Future<T?>? _load() async {
     if (_cachedValueLoadingFuture != null) {
       return _cachedValueLoadingFuture;
     }
@@ -122,13 +121,13 @@ class SimpleJsonPersistence<T extends HasToJson> {
       }
       final data = await store.load();
       try {
-        final ret = fromJson(json.decode(data) as Map<String, dynamic>);
+        final ret = fromJson(json.decode(data) as Map<String, dynamic>?);
         return _updateValue(ret);
       } on FormatException catch (e, stackTrace) {
-        if (data == null || data.isEmpty) {
+        if (data.isEmpty) {
           _logger.shout(
               '$name: json file is completely empty. '
-              'for some reason corrupted? (${data?.length})'
+              'for some reason corrupted? (${data.length})'
               'Using default value.',
               e,
               stackTrace);
@@ -152,7 +151,7 @@ class SimpleJsonPersistence<T extends HasToJson> {
     return (await _store).save(json.encode(value.toJson()));
   }
 
-  T _createDefault() => defaultCreator == null ? null : defaultCreator();
+  T? _createDefault() => defaultCreator == null ? null : defaultCreator!();
 
   Future<void> delete() async {
     await (await _store).delete();
@@ -170,7 +169,7 @@ class SimpleJsonPersistence<T extends HasToJson> {
     _cachedValueLoadingFuture = null;
   }
 
-  T _updateValue(T value) {
+  T? _updateValue(T? value) {
     _logger.finest('$name updating value.');
     _onValueChanged.add(value);
     _cachedValueLoadingFuture = Future.value(value);
@@ -183,12 +182,10 @@ class SimpleJsonPersistence<T extends HasToJson> {
   /// Convenience method which allows simple updating of data.
   /// The [updater] gets the current value as parameter and is expected
   /// to return a copy with the new values which will be persisted afterwards.
-  Future<T> update(T Function(T data) updater) async {
+  Future<T> update(T Function(T? data) updater) async {
     return _updateLock.synchronized(() async {
       final newData = updater(await load());
-      if (newData != null) {
-        await save(newData);
-      }
+      await save(newData);
       return newData;
     });
   }
