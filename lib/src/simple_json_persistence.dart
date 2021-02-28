@@ -34,6 +34,13 @@ class SimpleJsonPersistenceWithDefault<T extends HasToJson>
   Future<T> load() async {
     return (await super.load())!;
   }
+
+  @override
+  Stream<T> get onValueChanged => super.onValueChanged.cast<T>();
+
+  @override
+  Stream<T> get onValueChangedAndLoad =>
+      Stream.fromFuture(load()).concatWith([onValueChanged]);
 }
 
 /// Simple storage for any objects which can be serialized to json.
@@ -64,7 +71,7 @@ class SimpleJsonPersistence<T extends HasToJson> {
   final String name;
   FromJson<T> fromJson;
   final T Function()? defaultCreator;
-  final PublishSubject<T?> _onValueChanged = PublishSubject<T>();
+  final PublishSubject<T?> _onValueChanged = PublishSubject<T?>();
   final StoreBackend storeBackend;
   Future<Store>? _storeCached;
 
@@ -75,8 +82,8 @@ class SimpleJsonPersistence<T extends HasToJson> {
 
   /// Stream with the current value as first event,
   /// concatenated with [onValueChanged].
-  Stream<T> get onValueChangedAndLoad =>
-      Stream.fromFuture(load()).concatWith([onValueChanged]) as Stream<T>;
+  Stream<T?> get onValueChangedAndLoad =>
+      Stream.fromFuture(load()).concatWith([onValueChanged]);
 
   Stream<T?> onValueChangedOrDefault(Future<T> defaultValue) => Rx.concat<T?>([
         Stream.fromFuture(_cachedValueOrLoading ?? defaultValue),

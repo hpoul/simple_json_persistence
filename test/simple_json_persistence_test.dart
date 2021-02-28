@@ -99,6 +99,23 @@ void main() {
     await store.save(objValue);
     await store.dispose();
   });
+  test('change stream with default class', () async {
+    const defaultValue = Dummy(stringTest: 'default');
+    final store = SimpleJsonPersistence.getForTypeWithDefault(Dummy.fromJson,
+        defaultCreator: () => defaultValue);
+    expect(
+        store.onValueChangedAndLoad,
+        emitsInOrder(<dynamic>[
+          defaultValue,
+          objValue,
+          emitsDone,
+        ]));
+    // we have to call `load` here, so that we wait for the default value
+    // to be created before calling `save`.
+    await store.load();
+    await store.save(objValue);
+    await store.dispose();
+  });
   test('corrupted empty file', () async {
     // when file was emptied, we expect default value to be created.
     {
