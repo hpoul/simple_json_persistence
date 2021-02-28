@@ -13,7 +13,7 @@ abstract class HasToJson {
   Map<String, dynamic> toJson();
 }
 
-typedef FromJson<T> = T Function(Map<String, dynamic>? json);
+typedef FromJson<T> = T Function(Map<String, dynamic> json);
 
 /// Simple storage for any objects which can be serialized to json.
 ///
@@ -121,7 +121,11 @@ class SimpleJsonPersistence<T extends HasToJson> {
       }
       final data = await store.load();
       try {
-        final ret = fromJson(json.decode(data) as Map<String, dynamic>?);
+        final jsonData = json.decode(data) as Map<String, dynamic>?;
+        if (jsonData == null) {
+          throw const FormatException('data was empty.');
+        }
+        final ret = fromJson(jsonData);
         return _updateValue(ret);
       } on FormatException catch (e, stackTrace) {
         if (data.isEmpty) {

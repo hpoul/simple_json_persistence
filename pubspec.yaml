@@ -1,7 +1,7 @@
 name: simple_json_persistence
 description: Flutter data storage based on simple json files with support for multiple
   storage instances, streams, etc.
-version: 2.0.0-nullsafety.1
+version: 2.0.0-nullsafety.2
 homepage: https://github.com/hpoul/simple_json_persistence
 
 environment:
