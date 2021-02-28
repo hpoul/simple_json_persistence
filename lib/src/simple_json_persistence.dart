@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:simple_json_persistence/simple_json_persistence.dart';
 import 'package:simple_json_persistence/src/persistence_base.dart';
 import 'package:synchronized/synchronized.dart';
 
@@ -14,6 +15,26 @@ abstract class HasToJson {
 }
 
 typedef FromJson<T> = T Function(Map<String, dynamic> json);
+
+class SimpleJsonPersistenceWithDefault<T extends HasToJson>
+    extends SimpleJsonPersistence<T> {
+  SimpleJsonPersistenceWithDefault._({
+    required FromJson<T> fromJson,
+    required String name,
+    required T Function() defaultCreator,
+    required StoreBackend storeBackend,
+  }) : super._(
+          fromJson: fromJson,
+          name: name,
+          defaultCreator: defaultCreator,
+          storeBackend: storeBackend,
+        );
+
+  @override
+  Future<T> load() async {
+    return (await super.load())!;
+  }
+}
 
 /// Simple storage for any objects which can be serialized to json.
 ///
@@ -91,12 +112,33 @@ class SimpleJsonPersistence<T extends HasToJson> {
           T>; //Future.value(storage as SimpleJsonPersistence<T>);
     }
 
-    return _storageSingletons[name] = SimpleJsonPersistence<T>._(
-      fromJson: fromJson,
-      name: name,
+    return _storageSingletons[name] = defaultCreator == null
+        ? SimpleJsonPersistence<T>._(
+            fromJson: fromJson,
+            name: name,
+            storeBackend: storeBackend ?? StoreBackend.create(),
+          )
+        : SimpleJsonPersistenceWithDefault<T>._(
+            fromJson: fromJson,
+            name: name,
+            defaultCreator: defaultCreator,
+            storeBackend: storeBackend ?? StoreBackend.create(),
+          );
+  }
+
+  static SimpleJsonPersistenceWithDefault<T>
+      getForTypeWithDefault<T extends HasToJson>(
+    FromJson<T> fromJson, {
+    required T Function() defaultCreator,
+    String? customName,
+    StoreBackend? storeBackend,
+  }) {
+    return getForTypeSync(
+      fromJson,
       defaultCreator: defaultCreator,
-      storeBackend: storeBackend ?? StoreBackend.create(),
-    );
+      customName: customName,
+      storeBackend: storeBackend,
+    ) as SimpleJsonPersistenceWithDefault<T>;
   }
 
   /// Loads and deserializes data from storage. It is safe to be called
