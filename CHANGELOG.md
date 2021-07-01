@@ -1,3 +1,7 @@
+## 2.0.0
+
+* Stable Null safety release.
+
 ## 2.0.0-nullsafety.4
 
 * Support for null safety.
