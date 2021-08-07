@@ -1,7 +1,7 @@
 name: simple_json_persistence
 description: Flutter data storage based on simple json files with support for multiple
   storage instances, streams, etc.
-version: 2.0.0
+version: 2.0.1
 homepage: https://github.com/hpoul/simple_json_persistence
 
 environment:
@@ -10,11 +10,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  meta: ^1.3.0
+  meta: ">=1.3.0 <2.0.0"
   path: ^1.8.0
-  logging: ^1.0.0
+  logging: ">=1.0.0 <2.0.0"
   rxdart: '>=0.26.0 <1.0.0'
-  path_provider: ^2.0.0
+  path_provider: ">=2.0.0 <3.0.0"
   synchronized: ^3.0.0
 
 dev_dependencies:

@@ -1,3 +1,8 @@
+## 2.0.1
+
+* Allow passing of `name` to constructor.
+  On JavaScript it would take the minified name otherwise.
+
 ## 2.0.0
 
 * Stable Null safety release.

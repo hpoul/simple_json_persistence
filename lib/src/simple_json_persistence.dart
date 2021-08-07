@@ -105,14 +105,19 @@ class SimpleJsonPersistence<T extends HasToJson> {
   /// Creates a new persistence store for the given type.
   /// The json file location can be customized by passing in a custom
   /// [storeBackend] and create it using [StoreBackend.create].
+  ///
+  /// Note: For Flutter Web/JavaScript make sure to pass a `name`, because
+  /// otherwise it will be the minified version which will change on every
+  /// build.
   static SimpleJsonPersistence<T> getForTypeSync<T extends HasToJson>(
     FromJson<T> fromJson, {
     T Function()? defaultCreator,
+    String? name,
     String? customName,
     StoreBackend? storeBackend,
   }) {
-    final name =
-        customName == null ? T.toString() : '${T.toString()}.$customName';
+    name ??= T.toString();
+    name = customName == null ? name : '$name.$customName';
     final storage = _storageSingletons[name];
     if (storage != null) {
       return storage as SimpleJsonPersistence<
@@ -137,12 +142,14 @@ class SimpleJsonPersistence<T extends HasToJson> {
       getForTypeWithDefault<T extends HasToJson>(
     FromJson<T> fromJson, {
     required T Function() defaultCreator,
+    String? name,
     String? customName,
     StoreBackend? storeBackend,
   }) {
     return getForTypeSync(
       fromJson,
       defaultCreator: defaultCreator,
+      name: name,
       customName: customName,
       storeBackend: storeBackend,
     ) as SimpleJsonPersistenceWithDefault<T>;
