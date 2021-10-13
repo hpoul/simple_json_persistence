@@ -41,6 +41,11 @@ class SimpleJsonPersistenceWithDefault<T extends HasToJson>
   @override
   Stream<T> get onValueChangedAndLoad =>
       Stream.fromFuture(load()).concatWith([onValueChanged]);
+
+  @override
+  Future<T> update(T Function(T data) updater) async {
+    return super.update((data) => updater(data!));
+  }
 }
 
 /// Simple storage for any objects which can be serialized to json.

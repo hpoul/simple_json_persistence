@@ -1,3 +1,7 @@
+## 2.0.1+1
+
+* Overload `update` in `SimpleJsonPersistenceWithDefault` to have non-nullable parameter.
+
 ## 2.0.1
 
 * Allow passing of `name` to constructor.
