@@ -430,7 +430,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "2.1.0"
+    version: "2.1.0+2"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -471,6 +471,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.0.0"
+  string_literal_finder_annotations:
+    dependency: transitive
+    description:
+      name: string_literal_finder_annotations
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.0"
   string_scanner:
     dependency: transitive
     description:

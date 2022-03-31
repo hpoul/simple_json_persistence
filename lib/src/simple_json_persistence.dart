@@ -6,6 +6,7 @@ import 'package:meta/meta.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:simple_json_persistence/simple_json_persistence.dart';
 import 'package:simple_json_persistence/src/persistence_base.dart';
+import 'package:string_literal_finder_annotations/string_literal_finder_annotations.dart';
 import 'package:synchronized/synchronized.dart';
 
 final _logger = Logger('simple_json_persistence');
@@ -78,9 +79,8 @@ class SimpleJsonPersistence<T extends HasToJson> {
   final T Function()? defaultCreator;
   final PublishSubject<T?> _onValueChanged = PublishSubject<T?>();
   final StoreBackend storeBackend;
-  Future<Store>? _storeCached;
 
-  Future<Store> get _store => _storeCached ??= storeBackend.storeForFile(name);
+  late final Future<Store> _store = storeBackend.storeForFile(name);
 
   /// Stream which will receive a new notification on every [save] call.
   Stream<T?> get onValueChanged => _onValueChanged.stream;
@@ -117,8 +117,8 @@ class SimpleJsonPersistence<T extends HasToJson> {
   static SimpleJsonPersistence<T> getForTypeSync<T extends HasToJson>(
     FromJson<T> fromJson, {
     T Function()? defaultCreator,
-    required String? name,
-    String? customName,
+    @NonNls required String? name,
+    @NonNls String? customName,
     StoreBackend? storeBackend,
   }) {
     name ??= T.toString();
@@ -147,8 +147,8 @@ class SimpleJsonPersistence<T extends HasToJson> {
       getForTypeWithDefault<T extends HasToJson>(
     FromJson<T> fromJson, {
     required T Function() defaultCreator,
-    required String? name,
-    String? customName,
+    @NonNls required String? name,
+    @NonNls String? customName,
     StoreBackend? storeBackend,
   }) {
     return getForTypeSync(

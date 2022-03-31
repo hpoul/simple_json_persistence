@@ -1,3 +1,7 @@
+## 2.1.0+2
+
+* Mark `name` and `customName` as `@NonNls` from (string_literal_finder)[https://pub.dev/packages/string_literal_finder].
+
 ## 2.1.0+1
 
 * Make `name` constructor required. If you forget this, your data might be lost
