@@ -147,7 +147,7 @@ class SimpleJsonPersistence<T extends HasToJson> {
       getForTypeWithDefault<T extends HasToJson>(
     FromJson<T> fromJson, {
     required T Function() defaultCreator,
-    String? name,
+    required String? name,
     String? customName,
     StoreBackend? storeBackend,
   }) {

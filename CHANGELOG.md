@@ -1,4 +1,4 @@
-## 2.1.0
+## 2.1.0+1
 
 * Make `name` constructor required. If you forget this, your data might be lost
   if you rename your class file.

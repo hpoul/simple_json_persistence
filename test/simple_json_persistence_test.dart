@@ -128,8 +128,11 @@ void main() {
   });
   test('change stream with default class', () async {
     const defaultValue = Dummy(stringTest: 'default');
-    final store = SimpleJsonPersistence.getForTypeWithDefault(Dummy.fromJson,
-        defaultCreator: () => defaultValue);
+    final store = SimpleJsonPersistence.getForTypeWithDefault(
+      Dummy.fromJson,
+      defaultCreator: () => defaultValue,
+      name: null,
+    );
     expect(
         store.onValueChangedAndLoad,
         emitsInOrder(<dynamic>[
