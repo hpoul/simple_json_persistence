@@ -35,8 +35,10 @@ class SimpleCounter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final store = SimpleJsonPersistence.getForTypeSync(
-        (json) => AppData.fromJson(json),
-        defaultCreator: () => AppData(counter: 0));
+      (json) => AppData.fromJson(json),
+      defaultCreator: () => AppData(counter: 0),
+      name: 'AppData',
+    );
     return StreamBuilder<AppData>(
         stream: store.onValueChangedAndLoad,
         initialData: store.cachedValue,

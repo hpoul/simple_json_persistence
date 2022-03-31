@@ -33,14 +33,20 @@ import 'package:simple_json_persistence/simple_json_persistence.dart';
 @JsonSerializable(nullable: false)
 class MyModel {
   MyModel({this.property,});
-  factory MyModel.fromJson(Map<String, dynamic> json) => _$MyModelFromJson(json);
+
+  factory MyModel.fromJson(Map<String, dynamic> json) =>
+      _$MyModelFromJson(json);
+
   Map<String, dynamic> toJson() => _$MyModelToJson(this);
-  
+
   final String property;
 }
 
 void doSomething() async {
-  final store = SimpleJsonPersistence.forType((json) => MyModel.fromJson(json));
+  final store = SimpleJsonPersistence.forType(
+    (json) => MyModel.fromJson(json),
+    name = 'MyModel',
+  );
   await store.save(MyModel(property: 'foo'));
   final foo = await store.load();
 

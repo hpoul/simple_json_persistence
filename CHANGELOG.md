@@ -1,3 +1,8 @@
+## 2.1.0
+
+* Make `name` constructor required. If you forget this, your data might be lost
+  if you rename your class file.
+
 ## 2.0.1+1
 
 * Overload `update` in `SimpleJsonPersistenceWithDefault` to have non-nullable parameter.

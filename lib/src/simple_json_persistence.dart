@@ -111,13 +111,13 @@ class SimpleJsonPersistence<T extends HasToJson> {
   /// The json file location can be customized by passing in a custom
   /// [storeBackend] and create it using [StoreBackend.create].
   ///
-  /// Note: For Flutter Web/JavaScript make sure to pass a `name`, because
-  /// otherwise it will be the minified version which will change on every
-  /// build.
+  /// Note: For Flutter Web/JavaScript make sure to pass a non-null `name`,
+  /// because otherwise it will be the minified version which will change on
+  /// every build.
   static SimpleJsonPersistence<T> getForTypeSync<T extends HasToJson>(
     FromJson<T> fromJson, {
     T Function()? defaultCreator,
-    String? name,
+    required String? name,
     String? customName,
     StoreBackend? storeBackend,
   }) {

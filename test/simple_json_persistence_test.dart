@@ -44,35 +44,59 @@ void main() {
   });
   setUp(() async {
     PrintAppender.setupLogging();
-    final store = SimpleJsonPersistence.getForTypeSync(Dummy.fromJson);
+    final store = SimpleJsonPersistence.getForTypeSync(
+      Dummy.fromJson,
+      name: null,
+    );
     await store.delete();
     await store.dispose();
   });
   const objValue = Dummy(stringTest: 'blubb', intTest: 1);
   test('Test Simple Storage', () async {
     {
-      final store = SimpleJsonPersistence.getForTypeSync(Dummy.fromJson);
+      final store = SimpleJsonPersistence.getForTypeSync(
+        Dummy.fromJson,
+        name: null,
+      );
       expect(await store.load(), isNull);
       await store.save(objValue);
       // getting store a second time should get the same instance.
-      expect(SimpleJsonPersistence.getForTypeSync(Dummy.fromJson), same(store));
+      expect(
+          SimpleJsonPersistence.getForTypeSync(
+            Dummy.fromJson,
+            name: null,
+          ),
+          same(store));
       await store.dispose();
       expect(
-          SimpleJsonPersistence.getForTypeSync(Dummy.fromJson), notSame(store));
+          SimpleJsonPersistence.getForTypeSync(
+            Dummy.fromJson,
+            name: null,
+          ),
+          notSame(store));
     }
 
-    final store = SimpleJsonPersistence.getForTypeSync(Dummy.fromJson);
+    final store = SimpleJsonPersistence.getForTypeSync(
+      Dummy.fromJson,
+      name: null,
+    );
     expect(await store.load(), objValue);
     expect(await store.load(), notSame(objValue));
   });
   test('Default Creator', () async {
     const defaultValue = Dummy(stringTest: 'default', intTest: 9);
-    final store = SimpleJsonPersistence.getForTypeSync(Dummy.fromJson,
-        defaultCreator: () => defaultValue);
+    final store = SimpleJsonPersistence.getForTypeSync(
+      Dummy.fromJson,
+      defaultCreator: () => defaultValue,
+      name: null,
+    );
     expect(await store.load(), defaultValue);
   });
   test('change stream', () async {
-    final store = SimpleJsonPersistence.getForTypeSync(Dummy.fromJson);
+    final store = SimpleJsonPersistence.getForTypeSync(
+      Dummy.fromJson,
+      name: null,
+    );
     expect(
         store.onValueChanged,
         emitsInOrder(<dynamic>[
@@ -84,8 +108,11 @@ void main() {
   });
   test('change stream with default', () async {
     const defaultValue = Dummy(stringTest: 'default');
-    final store = SimpleJsonPersistence.getForTypeSync(Dummy.fromJson,
-        defaultCreator: () => defaultValue);
+    final store = SimpleJsonPersistence.getForTypeSync(
+      Dummy.fromJson,
+      defaultCreator: () => defaultValue,
+      name: null,
+    );
     expect(
         store.onValueChangedAndLoad,
         emitsInOrder(<dynamic>[
@@ -125,6 +152,7 @@ void main() {
         Dummy.fromJson,
         defaultCreator: () => defaultValue,
         storeBackend: storeBackend,
+        name: null,
       );
       await store.save(objValue);
       await store.dispose();
@@ -137,8 +165,11 @@ void main() {
     }
     {
       const defaultValue = Dummy(stringTest: 'default');
-      final store = SimpleJsonPersistence.getForTypeSync(Dummy.fromJson,
-          defaultCreator: () => defaultValue);
+      final store = SimpleJsonPersistence.getForTypeSync(
+        Dummy.fromJson,
+        defaultCreator: () => defaultValue,
+        name: null,
+      );
       expect(await store.load(), defaultValue);
     }
   });
@@ -148,6 +179,7 @@ void main() {
     final store = SimpleJsonPersistence.getForTypeSync(
       Dummy.fromJson,
       storeBackend: storeBackend,
+      name: null,
     );
     final f = storeBackend._store;
     f.value = 'invalid';
@@ -160,6 +192,7 @@ void main() {
         Dummy.fromJson,
         defaultCreator: () => const Dummy(stringTest: 'first', intTest: 1),
         storeBackend: storeBackend,
+        name: null,
       );
 //      final f = storeBackend._store;
 //      final result = store
@@ -191,6 +224,7 @@ void main() {
       Dummy.fromJson,
       defaultCreator: () => defaultValue,
       storeBackend: storeBackend,
+      name: null,
     );
     await store.save(objValue);
 
