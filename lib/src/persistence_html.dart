@@ -1,12 +1,10 @@
-import 'dart:html';
-
-import 'package:simple_json_persistence/simple_json_persistence.dart';
 import 'package:simple_json_persistence/src/persistence_base.dart';
+import 'package:web/web.dart' as web;
 
 class StoreBackendHtml extends StoreBackend {
   @override
   Future<Store> storeForFile(String name) async {
-    return StoreHtml(window.localStorage, name);
+    return StoreHtml(web.window.localStorage, name);
   }
 }
 
@@ -16,17 +14,17 @@ StoreBackend createStoreBackend([BaseDirectoryBuilder? baseDirectoryBuilder]) =>
 class StoreHtml extends Store {
   StoreHtml(this._storage, this._name);
 
-  final Storage _storage;
+  final web.Storage _storage;
   final String _name;
 
   @override
   Future<void> delete() async {
-    _storage.remove(_name);
+    _storage.removeItem(_name);
   }
 
   @override
   Future<bool> exists() async {
-    return _storage.containsKey(_name);
+    return _storage.getItem(_name) != null;
   }
 
   @override

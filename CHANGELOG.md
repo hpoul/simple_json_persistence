@@ -1,3 +1,7 @@
+## 2.2.0-dev.1
+
+* Initial support for package:web (wasm)
+
 ## 2.1.0+2
 
 * Mark `name` and `customName` as `@NonNls` from (string_literal_finder)[https://pub.dev/packages/string_literal_finder].

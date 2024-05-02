@@ -1,6 +1,6 @@
 import 'package:simple_json_persistence/src/persistence_noop.dart'
     if (dart.library.io) 'package:simple_json_persistence/src/persistence_io.dart'
-    if (dart.library.html) 'package:simple_json_persistence/src/persistence_html.dart';
+    if (dart.library.js_interop) 'package:simple_json_persistence/src/persistence_html.dart';
 
 typedef BaseDirectoryBuilder = Future<String> Function();
 
