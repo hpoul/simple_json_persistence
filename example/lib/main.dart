@@ -39,10 +39,11 @@ class SimpleCounter extends StatelessWidget {
       defaultCreator: () => AppData(counter: 0),
       name: 'AppData',
     );
-    return StreamBuilder<AppData>(
+    return StreamBuilder<AppData?>(
         stream: store.onValueChangedAndLoad,
         initialData: store.cachedValue,
-        builder: (BuildContext context, AsyncSnapshot<AppData> snapshot) {
+        builder: (context, snapshot) {
+          final data = snapshot.data;
           return Scaffold(
             appBar: AppBar(
               title: const Text('SimpleJsonPersistence Example'),
@@ -52,7 +53,7 @@ class SimpleCounter extends StatelessWidget {
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: !snapshot.hasData
+                  children: data == null
                       ? <Widget>[
                           const Center(child: CircularProgressIndicator())
                         ]
@@ -65,8 +66,9 @@ class SimpleCounter extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: <Widget>[
                               Text(
-                                '${snapshot.data.counter}',
-                                style: Theme.of(context).textTheme.headline4,
+                                '${data.counter}',
+                                style:
+                                    Theme.of(context).textTheme.headlineSmall,
                               ),
                               const Text(' times')
                             ],
@@ -74,7 +76,7 @@ class SimpleCounter extends StatelessWidget {
                           const SizedBox(height: 32),
                           const Text(
                             'Value will be persistet on every touch, so feel free to restart the app at any time.',
-                            textScaleFactor: 0.75,
+                            textScaler: TextScaler.linear(0.75),
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -83,7 +85,7 @@ class SimpleCounter extends StatelessWidget {
             ),
             floatingActionButton: FloatingActionButton(
               onPressed: () =>
-                  store.save(AppData(counter: snapshot.data.counter + 1)),
+                  store.save(AppData(counter: (data?.counter ?? 0) + 1)),
               tooltip: 'Increment',
               child: const Icon(Icons.add),
             ),
