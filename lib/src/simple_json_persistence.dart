@@ -20,16 +20,11 @@ typedef FromJson<T> = T Function(Map<String, dynamic> json);
 class SimpleJsonPersistenceWithDefault<T extends HasToJson>
     extends SimpleJsonPersistence<T> {
   SimpleJsonPersistenceWithDefault._({
-    required FromJson<T> fromJson,
-    required String name,
-    required T Function() defaultCreator,
-    required StoreBackend storeBackend,
-  }) : super._(
-          fromJson: fromJson,
-          name: name,
-          defaultCreator: defaultCreator,
-          storeBackend: storeBackend,
-        );
+    required super.fromJson,
+    required super.name,
+    required T Function() super.defaultCreator,
+    required super.storeBackend,
+  }) : super._();
 
   @override
   Future<T> load() async {

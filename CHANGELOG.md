@@ -1,4 +1,4 @@
-## 2.2.0-dev.3
+## 2.2.0
 
 * Initial support for package:web (wasm)
 

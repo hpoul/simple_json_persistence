@@ -8,7 +8,7 @@ import 'package:simple_json_persistence/src/persistence_base.dart';
 
 final _logger = Logger('persistence_io');
 
-const _SUB_DIR_NAME = 'json';
+const _subDirName = 'json';
 
 //typedef BaseDirectoryBuilder = Future<String> Function();
 
@@ -23,7 +23,7 @@ class StoreBackendIo extends StoreBackend {
       (Platform.isWindows
               ? getLibraryDirectory()
               : getApplicationDocumentsDirectory())
-          .then((dir) => p.join(dir.path, _SUB_DIR_NAME));
+          .then((dir) => p.join(dir.path, _subDirName));
 
   final BaseDirectoryBuilder documentsDirBuilder;
 

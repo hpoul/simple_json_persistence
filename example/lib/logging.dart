@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:logging/logging.dart';
 
 void setupLoggingPrintRecord() {
@@ -9,7 +11,8 @@ void setupLoggingPrintRecord() {
       print(rec.error);
     }
     // ignore: avoid_as
-    final stackTrace = rec.stackTrace ?? (rec.error is Error ? (rec.error as Error).stackTrace : null);
+    final stackTrace = rec.stackTrace ??
+        (rec.error is Error ? (rec.error as Error).stackTrace : null);
     if (stackTrace != null) {
       print(stackTrace);
     }

@@ -10,6 +10,7 @@ dependencies:
     sdk: flutter
   simple_json_persistence:
     path: ../
+  logging: ^1.2.0
   json_annotation: ^4.9.0
 
 dev_dependencies:
