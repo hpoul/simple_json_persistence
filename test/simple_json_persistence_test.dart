@@ -195,7 +195,15 @@ void main() {
         Dummy.fromJson,
         defaultCreator: () => const Dummy(stringTest: 'first', intTest: 1),
         storeBackend: storeBackend,
-        name: null,
+        // **Its own name, so this test keeps its store to itself.** Stores are
+        // singletons keyed by name and `null` means the one every other test in
+        // this file shares. This one is built inside `fakeAsync` and never
+        // disposed, so under a shared name it leaves behind a store whose
+        // pending futures belong to a clock that has stopped — and the next
+        // test's `setUp` awaits one of them until the runner gives up at thirty
+        // seconds. Whether that happened was down to how many awaits the save
+        // path had, which is not something a test should depend on.
+        name: 'race-condition',
       );
 //      final f = storeBackend._store;
 //      final result = store
